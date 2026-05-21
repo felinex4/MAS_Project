@@ -316,7 +316,7 @@ function showError(msg) {
 async function getOsrmRoute(lats, lons) {
     const coords = lons.map((lon, i) => `${lon},${lats[i]}`).join(';');
     try {
-        const res  = await fetch(`http://router.project-osrm.org/route/v1/driving/${coords}?geometries=geojson&overview=full`);
+        const res  = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?geometries=geojson&overview=full`);
         const data = await res.json();
         if (data.routes && data.routes[0]) return data.routes[0].geometry.coordinates;
     } catch(e) {}

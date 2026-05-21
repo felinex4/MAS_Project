@@ -49,7 +49,7 @@ def snap_to_road(lat, lon):
     Snaps a coordinate to the nearest road via OSRM nearest API.
     Returns (snapped_lat, snapped_lon) or None on failure.
     """
-    url = f"http://router.project-osrm.org/nearest/v1/driving/{lon},{lat}?number=1"
+    url = f"https://router.project-osrm.org/nearest/v1/driving/{lon},{lat}?number=1"
     try:
         resp = requests.get(url, timeout=8)
         if resp.status_code == 200:

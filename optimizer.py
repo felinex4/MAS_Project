@@ -7,7 +7,7 @@ from functools import lru_cache
 def get_osrm_distance_matrix(lats, lons):
     """Fetches real road distance matrix from OSRM public API (max 100 coords)."""
     coords_str = ";".join([f"{lon},{lat}" for lat, lon in zip(lats, lons)])
-    url = f"http://router.project-osrm.org/table/v1/driving/{coords_str}?annotations=distance"
+    url = f"https://router.project-osrm.org/table/v1/driving/{coords_str}?annotations=distance"
     response = requests.get(url, timeout=30)
     if response.status_code == 200:
         data = response.json()
