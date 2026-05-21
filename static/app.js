@@ -103,30 +103,36 @@ shiftSelect.addEventListener('change', () => {
 // ── Utility ──
 const fmtMoney = n => 'Rs. ' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 
-// ── Init DeckGL map ──
+// ── Init map with MapLibre GL + deck.gl overlay ──
+let _map;
 function initMap() {
-    deckgl = new deck.DeckGL({
+    _map = new maplibregl.Map({
         container: 'map-container',
-        mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-        initialViewState: {
-            longitude: DEPOT_LON,
-            latitude: DEPOT_LAT,
-            zoom: 10.5,
-            pitch: 45,
-            bearing: 15
-        },
-        controller: true,
-        onHover: ({object, x, y}) => {
-            if (object) {
-                tooltip.style.left = `${x + 14}px`;
-                tooltip.style.top  = `${y + 14}px`;
-                tooltip.innerHTML  = (object.name || '') + (object.demand ? `\n${object.demand}` : '');
-                tooltip.style.display = 'block';
-            } else {
-                tooltip.style.display = 'none';
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [DEPOT_LON, DEPOT_LAT],
+        zoom: 10.5,
+        pitch: 45,
+        bearing: 15
+    });
+
+    deckgl = new deck.MapboxOverlay({
+        interleaved: false,
+        layers: [],
+        getTooltip: ({object}) => object && {
+            html: `<div>${object.name || ''}${object.demand ? '<br/>' + object.demand : ''}</div>`,
+            style: {
+                background: 'rgba(15,20,35,0.92)',
+                color: '#e2e8f0',
+                fontSize: '13px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid rgba(99,179,237,0.3)',
+                pointerEvents: 'none'
             }
         }
     });
+
+    _map.addControl(deckgl);
 }
 
 // ── Draw just a radius circle, no routes ──

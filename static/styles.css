@@ -358,6 +358,14 @@ input[type=range] {
 #map-container {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
+}
+/* Ensure MapLibre canvas fills container */
+#map-container .maplibregl-map,
+#map-container canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 .map-legend {
     position: absolute;
