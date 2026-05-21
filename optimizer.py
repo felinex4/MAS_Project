@@ -77,10 +77,8 @@ def run_optimization(df, shift_column,
     demands = [int(df.iloc[idx][shift_column]) for idx in active_indices]
     demands[0] = 0
 
-    # ── 5. Auto-size fleet ────────────────────────────────────────────────────
-    active_demand   = sum(demands)
-    min_buses       = math.ceil(active_demand / vehicle_capacity)
-    effective_fleet = max(num_vehicles, min_buses)
+    # ── 5. Respect the user's fleet size strictly ─────────────────────────
+    effective_fleet = num_vehicles          # never exceed what the user set
     capacities      = [vehicle_capacity] * effective_fleet
 
     # ── 6. OR-Tools model ─────────────────────────────────────────────────────
@@ -106,6 +104,13 @@ def run_optimization(df, shift_column,
         True, 'Distance'
     )
 
+    # ── 7. Make every non-depot stop optional (droppable) ────────────────────
+    # This lets OR-Tools drop stops when the fleet can't serve everyone,
+    # rather than exceeding the user-specified fleet size.
+    drop_penalty = int(total_budget_km * 1000 * 20)  # large enough to avoid dropping unless necessary
+    for node_idx in range(1, n):
+        routing.AddDisjunction([manager.NodeToIndex(node_idx)], drop_penalty)
+
     # ── 7. Solve ──────────────────────────────────────────────────────────────
     params = pywrapcp.DefaultRoutingSearchParameters()
     params.first_solution_strategy = (
@@ -130,9 +135,10 @@ def run_optimization(df, shift_column,
         }
 
     # ── 8. Extract routes ─────────────────────────────────────────────────────
-    routes     = []
-    buses_used = 0
-    total_dist = 0
+    routes        = []
+    buses_used    = 0
+    total_dist    = 0
+    visited_nodes = set()
 
     for vid in range(effective_fleet):
         idx   = routing.Start(vid)
@@ -141,6 +147,7 @@ def run_optimization(df, shift_column,
         while not routing.IsEnd(idx):
             node = manager.IndexToNode(idx)
             path.append(active_indices[node])
+            visited_nodes.add(node)
             prev = idx
             idx  = solution.Value(routing.NextVar(idx))
             rdist += routing.GetArcCostForVehicle(prev, idx, vid)
@@ -149,6 +156,12 @@ def run_optimization(df, shift_column,
             routes.append(path)
             total_dist += rdist
             buses_used += 1
+
+    # Detect stops OR-Tools dropped due to fleet / distance constraints
+    for node_idx in range(1, n):
+        if node_idx not in visited_nodes and demands[node_idx] > 0:
+            dropped_nodes.append(active_indices[node_idx])
+            dropped_demand += demands[node_idx]
 
     optimized_km   = total_dist / 1000.0
     distance_saved = baseline_km - optimized_km

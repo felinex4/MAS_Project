@@ -4,6 +4,7 @@ const DEPOT_LON = 80.7061;
 let currentData = [];
 let deckgl;
 let sidebarOpen = true;
+let _currentLayers = []; // keeps the last rendered route/dot layers
 
 // DOM refs
 const shiftSelect  = document.getElementById('shiftSelect');
@@ -54,8 +55,7 @@ function setStep(n) {
         else if (i === n - 1) s.className = 'stepper-step active';
         else            s.className = 'stepper-step';
     });
-    // Scroll metrics into view smoothly
-    stepper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Do NOT scroll — user should stay at their current scroll position
 }
 function hideStepper() {
     stepper.classList.add('hidden');
@@ -86,6 +86,7 @@ radiusSlider.oninput = () => {
 };
 radiusSlider.onchange = () => {
     showRadiusCircle = false;
+    clearRadiusCircle();
     // Regenerate data inside new radius
     generateData(true, parseInt(radiusSlider.value));
 };
@@ -135,15 +136,12 @@ function initMap() {
     _map.addControl(deckgl);
 }
 
-// ── Draw just a radius circle, no routes ──
-function drawRadiusCircle(radius_km) {
-    // Generate a smooth polygon circle approximation
+// ── Build the radius circle layer ──
+function buildRadiusCircleLayer(radius_km) {
     const points = 120;
     const radiusMeters = radius_km * 1000;
-    // Degrees per meter (approx)
     const latPerM = 1 / 111320;
     const lonPerM = 1 / (111320 * Math.cos(DEPOT_LAT * Math.PI / 180));
-
     const ring = [];
     for (let i = 0; i <= points; i++) {
         const angle = (i / points) * 2 * Math.PI;
@@ -152,30 +150,31 @@ function drawRadiusCircle(radius_km) {
             DEPOT_LAT + Math.sin(angle) * radiusMeters * latPerM
         ]);
     }
-
-    const circleLayer = new deck.PolygonLayer({
+    return new deck.PolygonLayer({
         id: 'radius-circle',
-        data: [{ polygon: ring, radius_km }],
+        data: [{ polygon: ring }],
         getPolygon: d => d.polygon,
-        getFillColor: [62, 207, 207, 25],
-        getLineColor: [62, 207, 207, 220],
+        getFillColor: [62, 207, 207, 20],
+        getLineColor: [62, 207, 207, 230],
         getLineWidth: 3,
         lineWidthMinPixels: 2,
         stroked: true,
         filled: true,
         pickable: false
     });
+}
 
-    const depotLayer = new deck.ScatterplotLayer({
-        id: 'depot',
-        data: [{ name: 'MAS Controline Pallekele (Depot)', coordinates: [DEPOT_LON, DEPOT_LAT] }],
-        getPosition: d => d.coordinates,
-        getFillColor: [255, 140, 0, 255],
-        getRadius: 700,
-        pickable: true
-    });
+// ── Show radius ring ON TOP of existing route layers ──
+function drawRadiusCircle(radius_km) {
+    // Filter out any previous radius-circle layer, keep everything else
+    const baseLayers = _currentLayers.filter(l => l.id !== 'radius-circle');
+    deckgl.setProps({ layers: [...baseLayers, buildRadiusCircleLayer(radius_km)] });
+}
 
-    deckgl.setProps({ layers: [depotLayer, circleLayer] });
+// ── Remove radius ring, restore route layers ──
+function clearRadiusCircle() {
+    const baseLayers = _currentLayers.filter(l => l.id !== 'radius-circle');
+    deckgl.setProps({ layers: baseLayers });
 }
 
 // ── Fetch dataset ──
@@ -397,6 +396,7 @@ async function drawMap(optResult) {
     }
 
     setStep(4); // Step 4: Rendering map
+    _currentLayers = layers; // save so radius circle can overlay without wiping
     deckgl.setProps({layers});
     // Small delay then hide stepper so user sees Step 4 complete
     await new Promise(r => setTimeout(r, 600));
