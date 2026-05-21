@@ -145,61 +145,299 @@
         </div>
     </section>
 
-    <!-- Section 3: Optimisation Technique -->
+    <!-- Section 3: Optimisation Methodology -->
     <section class="section">
         <h2 class="section-title">Optimisation Methodology</h2>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="info-tag">Model</div>
-                <h3>Problem Formulation</h3>
-                <p>Capacitated Vehicle Routing Problem (CVRP) — a classical Operations Research model. Given a set of locations each with a passenger demand, find the minimum-cost set of routes for a fixed fleet of buses, each with a seat limit.</p>
+        <p class="section-desc">This system solves a real-world logistics problem using classical Operations Research, powered by Google OR-Tools. Below is a full walkthrough of the model formulation, solver technique, and constraints applied.</p>
+
+        <!-- Step 1: Problem Formulation -->
+        <div class="method-block">
+            <div class="method-step-badge">Step 1</div>
+            <h3 class="method-title">Problem Formulation — Capacitated Vehicle Routing Problem (CVRP)</h3>
+            <p class="method-desc">
+                The transport scheduling problem is modelled as a <b>Capacitated Vehicle Routing Problem (CVRP)</b> — one of the most well-studied problems in combinatorial optimisation and Operations Research.
+            </p>
+            <div class="method-detail-grid">
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🏭</div>
+                    <div>
+                        <b>Single Depot</b><br>
+                        All buses originate from and return to the MAS Controline Pallekele factory. This is the depot node in the graph.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">📍</div>
+                    <div>
+                        <b>99 Passenger Stops</b><br>
+                        Each stop has a fixed passenger demand (workers to collect or drop). The solver must decide which bus visits which stops.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🚌</div>
+                    <div>
+                        <b>Homogeneous Fleet</b><br>
+                        All buses are identical — same seat capacity. The solver allocates the minimum number of buses needed to cover all stops.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🎯</div>
+                    <div>
+                        <b>Objective Function</b><br>
+                        Minimise the <b>total distance (km)</b> travelled by the entire fleet across all routes combined for a single shift.
+                    </div>
+                </div>
             </div>
-            <div class="info-card">
-                <div class="info-tag">Solver</div>
-                <h3>Solver Engine</h3>
-                <p>Google OR-Tools Routing API. Initial solution generated using the <b>Path Cheapest Arc</b> heuristic. This seed is then iteratively improved using <b>Guided Local Search (GLS)</b> metaheuristic within a 4-second time limit.</p>
+            <div class="method-formula">
+                <span class="formula-label">Minimise:</span>
+                <span class="formula-text">∑<sub>k</sub> ∑<sub>i</sub> ∑<sub>j</sub> d<sub>ij</sub> · x<sub>ijk</sub></span>
+                <span class="formula-note">where d<sub>ij</sub> = real road distance between stop i and j, x<sub>ijk</sub> = 1 if bus k travels from i to j</span>
             </div>
-            <div class="info-card">
-                <div class="info-tag">Distances</div>
-                <h3>Real Road Distances</h3>
-                <p>Straight-line (Haversine) distances are inaccurate for hilly Sri Lanka. All pairwise distances are fetched from the <b>Open Source Routing Machine (OSRM)</b> public API, using actual OpenStreetMap road network data.</p>
+        </div>
+
+        <!-- Step 2: Distance Matrix -->
+        <div class="method-block">
+            <div class="method-step-badge">Step 2</div>
+            <h3 class="method-title">Real Road Distance Matrix via OSRM</h3>
+            <p class="method-desc">
+                Straight-line (Haversine) distances are fundamentally inaccurate for Sri Lanka's mountainous terrain. The Kandy district has steep hills and winding roads where a 5 km straight line can be a 15 km road journey.
+            </p>
+            <div class="method-detail-grid">
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🗺️</div>
+                    <div>
+                        <b>OSRM Table API</b><br>
+                        The Open Source Routing Machine (OSRM) is called with all 100 coordinates (1 depot + 99 stops) to produce a <b>100×100 pairwise road distance matrix</b> in a single API call.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🛣️</div>
+                    <div>
+                        <b>OpenStreetMap Data</b><br>
+                        OSRM uses real OpenStreetMap road network data — actual driving routes, road types, and speeds. All distances are in kilometres.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">⚡</div>
+                    <div>
+                        <b>LRU Caching</b><br>
+                        The distance matrix is cached in memory. Re-running the optimiser with different fleet/capacity/cost parameters reuses the same matrix — no repeated API calls.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🔍</div>
+                    <div>
+                        <b>Pre-filtering</b><br>
+                        Before solving, any stop whose road distance from the depot exceeds the user-set one-way limit is <b>excluded</b> before entering the solver — reducing problem size.
+                    </div>
+                </div>
             </div>
-            <div class="info-card">
-                <div class="info-tag">Constraints</div>
-                <h3>Time Constraints</h3>
-                <p>A <b>Distance Dimension</b> is added to the solver that caps each bus route at a maximum total distance. This models a real-world commute time limit — workers must reach home within a reasonable duration.</p>
+        </div>
+
+        <!-- Step 3: Constraints -->
+        <div class="method-block">
+            <div class="method-step-badge">Step 3</div>
+            <h3 class="method-title">Constraints Applied to the Model</h3>
+            <p class="method-desc">Three hard constraints are enforced. No solution that violates any of these is accepted by the solver.</p>
+            <div class="constraints-grid">
+                <div class="constraint-card">
+                    <div class="constraint-num">C1</div>
+                    <div class="constraint-body">
+                        <b>Seat Capacity Constraint</b>
+                        <p>The total passenger demand assigned to any single bus cannot exceed its seat capacity. Formally: <code>∑ demand(i) ≤ capacity</code> for all stops i on that bus's route. This is enforced using OR-Tools' <b>AddDimensionWithVehicleCapacity</b>.</p>
+                    </div>
+                </div>
+                <div class="constraint-card">
+                    <div class="constraint-num">C2</div>
+                    <div class="constraint-body">
+                        <b>Maximum Route Distance Constraint</b>
+                        <p>Each bus route has a total distance cap of <b>3× the one-way limit</b>. This models a real-world commute time ceiling — workers should not be on a bus for an unreasonable duration. Enforced via OR-Tools' <b>Distance Dimension</b>.</p>
+                    </div>
+                </div>
+                <div class="constraint-card">
+                    <div class="constraint-num">C3</div>
+                    <div class="constraint-body">
+                        <b>Fleet Size Constraint</b>
+                        <p>The number of active routes cannot exceed the user-specified fleet size. Rather than silently adding more buses, the solver uses <b>AddDisjunction</b> to make stops optional with a high penalty — dropping the least-accessible stops when the fleet is insufficient instead of exceeding the limit.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Solver -->
+        <div class="method-block">
+            <div class="method-step-badge">Step 4</div>
+            <h3 class="method-title">Solver Engine — Google OR-Tools Routing API</h3>
+            <p class="method-desc">
+                The CVRP is NP-Hard — meaning an exact optimal solution for 99 stops is computationally infeasible in real time. OR-Tools uses a two-phase <b>heuristic + metaheuristic</b> strategy to find a near-optimal solution within a fixed time limit.
+            </p>
+            <div class="solver-phases">
+                <div class="solver-phase">
+                    <div class="solver-phase-num">Phase 1</div>
+                    <div class="solver-phase-title">Constructive Heuristic — Path Cheapest Arc</div>
+                    <p>Builds an initial feasible solution by always extending the current partial route to the nearest unvisited stop. Fast and greedy — guarantees a valid starting point but not optimality. Acts as the seed for Phase 2.</p>
+                </div>
+                <div class="solver-phase-arrow">→</div>
+                <div class="solver-phase">
+                    <div class="solver-phase-num">Phase 2</div>
+                    <div class="solver-phase-title">Metaheuristic — Guided Local Search (GLS)</div>
+                    <p>Iteratively improves the Phase 1 solution by exploring neighbouring solutions (swap stops between routes, re-order within routes). GLS uses penalty terms to escape local optima — it <i>penalises</i> frequently visited solution features to force exploration of new areas of the search space. Runs for <b>4 seconds</b>.</p>
+                </div>
+            </div>
+            <div class="method-note">
+                💡 <b>Why GLS over simpler local search?</b> Simple hill-climbing gets trapped in local optima (a good solution that cannot be improved by small changes, but is not globally optimal). GLS's penalty mechanism forces the solver to explore beyond local optima, consistently producing better final solutions.
+            </div>
+        </div>
+
+        <!-- Step 5: Baseline Comparison -->
+        <div class="method-block">
+            <div class="method-step-badge">Step 5</div>
+            <h3 class="method-title">Baseline Comparison — Measuring the Saving</h3>
+            <p class="method-desc">
+                To quantify how much the optimiser saves, we compare against a <b>naive baseline</b>: sending one dedicated bus directly from the depot to each stop and back — no shared routes, no grouping. This is the worst-case scenario that represents an unoptimised operation.
+            </p>
+            <div class="method-detail-grid">
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">📏</div>
+                    <div>
+                        <b>Baseline Distance</b><br>
+                        Sum of all individual round trips: <code>∑ (depot→stop + stop→depot)</code> for every active stop. Uses real OSRM road distances.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">✅</div>
+                    <div>
+                        <b>Optimised Distance</b><br>
+                        Total kilometres driven by the entire fleet under the CVRP solution — buses share routes and collect multiple stops in one trip.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">💰</div>
+                    <div>
+                        <b>Financial Saving</b><br>
+                        <code>(Baseline − Optimised) × Operating Cost/km</code>. Reported in LKR per shift. Directly represents daily fuel and operational savings.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🌱</div>
+                    <div>
+                        <b>CO₂ Saving</b><br>
+                        Saved km × 0.67 kg CO₂/km (standard diesel bus emission factor). Quantifies the environmental benefit of route consolidation.
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Section 4: Data Generation -->
     <section class="section">
-        <h2 class="section-title">Data Generation Method</h2>
-        <div class="info-grid two-col">
-            <div class="info-card">
-                <div class="info-tag">Location</div>
-                <h3>Location Generation</h3>
-                <p>Random coordinates are generated within a configurable radius of the factory. Each coordinate is submitted to the <b>OSRM Nearest API</b> in parallel (40 concurrent threads) to snap it to the closest actual road, guaranteeing 100% routability.</p>
+        <h2 class="section-title">Synthetic Data Generation Pipeline</h2>
+        <p class="section-desc">Since real employee home-address data is confidential, this system generates a realistic synthetic dataset that mirrors actual factory transport patterns. The pipeline has four stages.</p>
+
+        <div class="method-block">
+            <div class="method-step-badge">Stage 1</div>
+            <h3 class="method-title">Coordinate Generation — Random Sampling Within Radius</h3>
+            <p class="method-desc">
+                Random geographic coordinates are generated uniformly within a user-configurable recruitment radius (default 40 km) around the MAS Controline Pallekele factory (7.2842°N, 80.7061°E). A bounding box is sampled first, then a Haversine distance filter discards points outside the circular radius — ensuring all stops are realistically reachable from the factory.
+            </p>
+            <div class="method-note">
+                📐 <b>Why uniform distribution?</b> Workers in a real factory live spread across the surrounding area without a strong geographic bias. A uniform distribution across the radius approximates this spread. A pool of 5× the required stops is generated to ensure enough valid candidates survive the road-snapping step.
             </div>
-            <div class="info-card">
-                <div class="info-tag">Demand</div>
-                <h3>Demand Generation</h3>
-                <p>Passenger demand at each stop is generated using a <b>Uniform Random Distribution</b> between 5 and 25 passengers per stop per shift. This simulates day-to-day variation in workforce attendance. Seed 42 ensures reproducible results.</p>
+        </div>
+
+        <div class="method-block">
+            <div class="method-step-badge">Stage 2</div>
+            <h3 class="method-title">Road Snapping — OSRM Nearest API (Parallel)</h3>
+            <p class="method-desc">
+                Raw random coordinates often land in fields, rivers, or buildings — locations that cannot be reached by road. Each coordinate is submitted to the <b>OSRM Nearest API</b>, which snaps it to the closest drivable road point on the OpenStreetMap network.
+            </p>
+            <div class="method-detail-grid">
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🔀</div>
+                    <div>
+                        <b>40 Parallel Threads</b><br>
+                        All road-snap requests are fired simultaneously using Python's <code>ThreadPoolExecutor</code>. This reduces dataset generation from ~2 minutes (sequential) to ~8–12 seconds.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">📌</div>
+                    <div>
+                        <b>100% Routable Stops</b><br>
+                        Only road-snapped coordinates are accepted. Any snapped point that exceeds the radius limit is discarded. Fallback coordinates near the depot pad the dataset if too few candidates survive.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🗺️</div>
+                    <div>
+                        <b>OpenStreetMap Network</b><br>
+                        OSRM uses the Sri Lanka road network from OSM — including A-grade, B-grade, and local roads in the Kandy district. All snapped stops are reachable by standard bus.
+                    </div>
+                </div>
+                <div class="method-detail-card">
+                    <div class="method-detail-icon">🏷️</div>
+                    <div>
+                        <b>Area Name Labelling</b><br>
+                        Each accepted stop is assigned a real Kandy district area name (99 names pre-loaded) for realistic readability, shuffled randomly using the seed.
+                    </div>
+                </div>
             </div>
-            <div class="info-card">
-                <div class="info-tag">Workforce</div>
-                <h3>Workforce Estimation</h3>
-                <p>MAS Active Controline Pallekele operates two full shift cycles daily. Summing passenger demands across all 99 stops for both Collect shifts gives an estimated <b id="workforceEst">—</b> unique employees who use the company transport per day (morning + afternoon shifts combined). Drop shifts carry the same people home, so they are not counted twice.</p>
+        </div>
+
+        <div class="method-block">
+            <div class="method-step-badge">Stage 3</div>
+            <h3 class="method-title">Demand Generation — Shift-Consistent Passenger Counts</h3>
+            <p class="method-desc">
+                For each stop, passenger demand is generated independently for two worker groups — morning shift and afternoon shift — using a <b>Discrete Uniform Distribution U[5, 25]</b>. The drop demands are then derived (not independently randomised) to enforce real-world logical consistency.
+            </p>
+            <div class="constraints-grid">
+                <div class="constraint-card">
+                    <div class="constraint-num" style="background:linear-gradient(135deg,#3ecfcf,#7c6af7)">G1</div>
+                    <div class="constraint-body">
+                        <b>Morning Shift Group (randomly generated)</b>
+                        <p><code>Demand_10AM_Collect</code> ~ U[5, 25] — buses collect these workers from home at 10 AM.<br>
+                        <code>Demand_2PM_Drop</code> = <code>Demand_10AM_Collect</code> — the <i>same</i> workers are dropped home at 2 PM. No independent value is generated.</p>
+                    </div>
+                </div>
+                <div class="constraint-card">
+                    <div class="constraint-num" style="background:linear-gradient(135deg,#f6a623,#e74c3c)">G2</div>
+                    <div class="constraint-body">
+                        <b>Afternoon Shift Group (randomly generated)</b>
+                        <p><code>Demand_2PM_Collect</code> ~ U[5, 25] — buses collect these workers from home at 2 PM.<br>
+                        <code>Demand_10PM_Drop</code> = <code>Demand_2PM_Collect</code> — the <i>same</i> workers are dropped home at 10 PM. No independent value is generated.</p>
+                    </div>
+                </div>
             </div>
-            <div class="info-card">
-                <div class="info-tag">Shifts</div>
-                <h3>Shift Structure</h3>
-                <p>
-                    <b>10:00 AM Collect</b> — Buses pick up workers from homes.<br>
-                    <b>2:00 PM Drop</b> — Buses drop early-shift workers home.<br>
-                    <b>2:00 PM Collect</b> — Buses pick up late-shift workers.<br>
-                    <b>10:00 PM Drop</b> — Buses drop night-shift workers home.
-                </p>
+            <div class="method-note">
+                🎲 <b>Seed behaviour:</b> The first page load uses seed 42 (reproducible, consistent demo). Each click of "Regenerate Dataset" uses a time-based seed — producing genuinely different passenger distributions to simulate day-to-day variation in attendance.
+            </div>
+        </div>
+
+        <div class="method-block">
+            <div class="method-step-badge">Stage 4</div>
+            <h3 class="method-title">Shift Structure — Four Optimisable Transport Events per Day</h3>
+            <div class="shift-timeline">
+                <div class="shift-event collect">
+                    <div class="shift-time">10:00 AM</div>
+                    <div class="shift-dir">COLLECT ↑</div>
+                    <div class="shift-desc">Morning shift workers picked up from home stops and transported to factory</div>
+                </div>
+                <div class="shift-event drop">
+                    <div class="shift-time">2:00 PM</div>
+                    <div class="shift-dir">DROP ↓</div>
+                    <div class="shift-desc">Same morning shift workers dropped back to their home stops from factory</div>
+                </div>
+                <div class="shift-event collect">
+                    <div class="shift-time">2:00 PM</div>
+                    <div class="shift-dir">COLLECT ↑</div>
+                    <div class="shift-desc">Afternoon shift workers picked up from home stops and transported to factory</div>
+                </div>
+                <div class="shift-event drop">
+                    <div class="shift-time">10:00 PM</div>
+                    <div class="shift-dir">DROP ↓</div>
+                    <div class="shift-desc">Same afternoon shift workers dropped back to their home stops from factory</div>
+                </div>
+            </div>
+            <div class="method-note" style="margin-top:20px">
+                ⚙️ Each of the four shift events is <b>independently optimisable</b> — select any shift in the sidebar to run the CVRP solver for that specific transport event. Route plans, bus deployments, and cost savings are computed per-shift.
             </div>
         </div>
     </section>

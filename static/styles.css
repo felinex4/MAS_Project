@@ -415,6 +415,253 @@ input[type=range] {
 }
 .info-grid.two-col { grid-template-columns: repeat(2, 1fr); }
 
+/* ═══════════════════ METHODOLOGY BLOCKS ═══════════════════ */
+.method-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.method-step-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.method-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.method-desc {
+    font-size: 14px;
+    color: #a0aec0;
+    line-height: 1.75;
+    margin-bottom: 20px;
+}
+
+.method-note {
+    background: rgba(62, 207, 207, 0.06);
+    border: 1px solid rgba(62, 207, 207, 0.2);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.7;
+    margin-top: 16px;
+}
+
+/* Method detail grid (4-col cards inside a block) */
+.method-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 4px;
+}
+@media (max-width: 1100px) { .method-detail-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px)  { .method-detail-grid { grid-template-columns: 1fr; } }
+
+.method-detail-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.6;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.method-detail-card b { color: var(--text); }
+
+.method-detail-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Math formula bar */
+.method-formula {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: rgba(124, 106, 247, 0.08);
+    border: 1px solid rgba(124, 106, 247, 0.25);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+}
+.formula-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.formula-text {
+    font-size: 18px;
+    font-family: 'Georgia', serif;
+    color: #fff;
+    font-style: italic;
+}
+.formula-note {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* Constraints grid */
+.constraints-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+}
+.constraint-card {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+}
+.constraint-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.constraint-body {
+    flex: 1;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.7;
+}
+.constraint-body b { color: var(--text); font-size: 14px; display: block; margin-bottom: 6px; }
+.constraint-body code {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 12px;
+    color: var(--accent);
+    font-family: monospace;
+}
+
+/* Solver phases */
+.solver-phases {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    margin-top: 8px;
+}
+.solver-phase {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.7;
+}
+.solver-phase-num {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+.solver-phase-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+.solver-phase-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 24px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+@media (max-width: 700px) {
+    .solver-phases { flex-direction: column; }
+    .solver-phase-arrow { transform: rotate(90deg); align-self: center; }
+}
+
+/* Shift timeline */
+.shift-timeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 8px;
+}
+@media (max-width: 900px) { .shift-timeline { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px)  { .shift-timeline { grid-template-columns: 1fr; } }
+
+.shift-event {
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+.shift-event.collect {
+    background: linear-gradient(135deg, rgba(62,207,207,0.08), rgba(62,207,207,0.03));
+    border-color: rgba(62,207,207,0.25);
+}
+.shift-event.drop {
+    background: linear-gradient(135deg, rgba(124,106,247,0.08), rgba(124,106,247,0.03));
+    border-color: rgba(124,106,247,0.25);
+}
+.shift-time {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 6px;
+}
+.shift-dir {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+.shift-event.collect .shift-dir { color: var(--accent); }
+.shift-event.drop    .shift-dir { color: var(--accent2); }
+.shift-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+
 .info-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
