@@ -1,0 +1,7 @@
+google-cloud-sdk/
+.git/
+__pycache__/
+*.zip
+deploy_out.txt
+deploy.bat
+deploy_log.txt

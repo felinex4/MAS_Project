@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAS Active Controline — Bus Routing Optimizer</title>
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebarClose" title="Close panel">✕</button>
+    <h2>Parameters</h2>
+
+    <div class="control-group">
+        <label for="shiftSelect">Shift</label>
+        <select id="shiftSelect">
+            <option value="Demand_10AM_Collect">10:00 AM — Collect (Home to Factory)</option>
+            <option value="Demand_2PM_Drop">2:00 PM — Drop (Factory to Home)</option>
+            <option value="Demand_2PM_Collect">2:00 PM — Collect (Home to Factory)</option>
+            <option value="Demand_10PM_Drop">10:00 PM — Drop (Factory to Home)</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>Fleet Size — <span id="fleetVal">40</span> buses</label>
+        <input type="range" id="fleetSlider" min="10" max="150" value="40">
+    </div>
+
+    <div class="control-group">
+        <label>Bus Capacity — <span id="capVal">50</span> seats</label>
+        <input type="range" id="capSlider" min="20" max="80" value="50" step="5">
+    </div>
+
+    <div class="control-group">
+        <label>Max One-Way Trip — <span id="distVal">30</span> km</label>
+        <input type="range" id="distSlider" min="5" max="80" value="30" step="5">
+        <p class="hint">Road km from factory to furthest stop. Total route budget = 3x this value.</p>
+    </div>
+
+    <div class="control-group">
+        <label>Operating Cost — Rs. <span id="fuelVal">300</span> / km</label>
+        <input type="range" id="fuelSlider" min="100" max="600" value="300" step="10">
+    </div>
+
+    <hr>
+
+    <div class="radius-group">
+        <label class="radius-label">Worker Recruitment Radius</label>
+        <div class="radius-display">
+            <span id="radiusVal">40</span>
+            <span class="radius-unit">km from factory</span>
+        </div>
+        <input type="range" id="radiusSlider" min="5" max="80" value="40" step="5">
+        <p class="radius-hint">Drag to preview zone on map. Release to regenerate dataset.</p>
+    </div>
+
+    <button id="generateBtn" class="btn">Regenerate Dataset</button>
+
+    <div class="sidebar-note">
+        <b>How it works</b><br>
+        Adjusting any parameter instantly recalculates via the Google OR-Tools CVRP engine without reloading the page.
+    </div>
+</div>
+
+<!-- ===== MAIN SCROLLABLE PAGE ===== -->
+<div class="page" id="mainPage">
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" id="sidebarToggle">Parameters</button>
+            <div>
+                <h1>MAS Active Controline</h1>
+                <p>Bus Transport Routing Optimisation — Kandy District, Sri Lanka</p>
+            </div>
+        </div>
+        <div class="shift-badge" id="shiftBadge">10:00 AM — Collect</div>
+    </header>
+
+    <!-- Section 1: KPI Metrics -->
+    <section class="section">
+        <h2 class="section-title">Performance Summary</h2>
+        <div id="statusAlert" class="alert hidden"></div>
+
+        <!-- Loading Stepper -->
+        <div id="loadingStepper" class="stepper hidden">
+            <div class="stepper-step" id="step-1">
+                <div class="step-dot"></div>
+                <span>Fetching road distance matrix from OSRM</span>
+            </div>
+            <div class="stepper-step" id="step-2">
+                <div class="step-dot"></div>
+                <span>Running OR-Tools CVRP optimisation engine</span>
+            </div>
+            <div class="stepper-step" id="step-3">
+                <div class="step-dot"></div>
+                <span>Tracing road geometries for all routes</span>
+            </div>
+            <div class="stepper-step" id="step-4">
+                <div class="step-dot"></div>
+                <span>Rendering 3D route visualisation</span>
+            </div>
+        </div>
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-label">Baseline Cost (No Optimisation)</div>
+                <div class="metric-val" id="m-baseline">—</div>
+                <div class="metric-sub">Direct point-to-point routing</div>
+            </div>
+            <div class="metric-card accent">
+                <div class="metric-label">Optimised Cost (OR-Tools CVRP)</div>
+                <div class="metric-val" id="m-optimized">—</div>
+                <div class="metric-sub delta" id="m-savings"></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Buses Deployed</div>
+                <div class="metric-val" id="m-buses">—</div>
+                <div class="metric-sub" id="m-buses-sub"></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">CO₂ Emissions Saved</div>
+                <div class="metric-val" id="m-co2">—</div>
+                <div class="metric-sub">kg CO₂ per shift</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Route Map -->
+    <section class="section">
+        <h2 class="section-title">Route Visualisation <span class="badge" id="mapMode">Loading...</span></h2>
+        <p class="section-desc">Real road-traced routes via OSRM. The depot is shown in orange. Passenger stops are shown in blue. Each coloured line represents a unique bus route.</p>
+        <div class="map-wrapper">
+            <div id="map-container"></div>
+            <div class="map-legend">
+                <span><span class="dot orange"></span> Depot</span>
+                <span><span class="dot blue"></span> Stops</span>
+                <span><span class="line-sample"></span> Optimised Routes</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Optimisation Technique -->
+    <section class="section">
+        <h2 class="section-title">Optimisation Methodology</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-tag">Model</div>
+                <h3>Problem Formulation</h3>
+                <p>Capacitated Vehicle Routing Problem (CVRP) — a classical Operations Research model. Given a set of locations each with a passenger demand, find the minimum-cost set of routes for a fixed fleet of buses, each with a seat limit.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-tag">Solver</div>
+                <h3>Solver Engine</h3>
+                <p>Google OR-Tools Routing API. Initial solution generated using the <b>Path Cheapest Arc</b> heuristic. This seed is then iteratively improved using <b>Guided Local Search (GLS)</b> metaheuristic within a 4-second time limit.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-tag">Distances</div>
+                <h3>Real Road Distances</h3>
+                <p>Straight-line (Haversine) distances are inaccurate for hilly Sri Lanka. All pairwise distances are fetched from the <b>Open Source Routing Machine (OSRM)</b> public API, using actual OpenStreetMap road network data.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-tag">Constraints</div>
+                <h3>Time Constraints</h3>
+                <p>A <b>Distance Dimension</b> is added to the solver that caps each bus route at a maximum total distance. This models a real-world commute time limit — workers must reach home within a reasonable duration.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Data Generation -->
+    <section class="section">
+        <h2 class="section-title">Data Generation Method</h2>
+        <div class="info-grid two-col">
+            <div class="info-card">
+                <div class="info-tag">Location</div>
+                <h3>Location Generation</h3>
+                <p>Random coordinates are generated within a configurable radius of the factory. Each coordinate is submitted to the <b>OSRM Nearest API</b> in parallel (40 concurrent threads) to snap it to the closest actual road, guaranteeing 100% routability.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-tag">Demand</div>
+                <h3>Demand Generation</h3>
+                <p>Passenger demand at each stop is generated using a <b>Uniform Random Distribution</b> between 5 and 25 passengers per stop per shift. This simulates day-to-day variation in workforce attendance. Seed 42 ensures reproducible results.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-tag">Workforce</div>
+                <h3>Workforce Estimation</h3>
+                <p>MAS Active Controline Pallekele operates two full shift cycles daily. Summing passenger demands across all 99 stops for both Collect shifts gives an estimated <b id="workforceEst">—</b> total employees serviced by the transport network.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-tag">Shifts</div>
+                <h3>Shift Structure</h3>
+                <p>
+                    <b>10:00 AM Collect</b> — Buses pick up workers from homes.<br>
+                    <b>2:00 PM Drop</b> — Buses drop early-shift workers home.<br>
+                    <b>2:00 PM Collect</b> — Buses pick up late-shift workers.<br>
+                    <b>10:00 PM Drop</b> — Buses drop night-shift workers home.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Sample Dataset -->
+    <section class="section">
+        <h2 class="section-title">Passenger Dataset</h2>
+        <p class="section-desc">All 99 destination stops within the selected radius with simulated daily passenger demand per shift.</p>
+        <div id="loadingTable" class="loading-msg">Loading dataset...</div>
+        <div class="table-wrapper" id="tableWrapper" style="display:none;">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Destination / Area</th>
+                        <th>10:00 AM Collect</th>
+                        <th>2:00 PM Drop</th>
+                        <th>2:00 PM Collect</th>
+                        <th>10:00 PM Drop</th>
+                        <th>Daily Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer class="page-footer">
+        MAS Active Controline Pallekele &nbsp;|&nbsp; Bus Transport Routing Optimisation System &nbsp;|&nbsp; Kandy District, Sri Lanka
+    </footer>
+</div>
+
+<div id="tooltip"></div>
+<script src="app.js"></script>
+</body>
+</html>
