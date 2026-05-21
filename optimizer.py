@@ -44,9 +44,10 @@ def run_optimization(df, shift_column,
     #    A stop 30 km away by road is reachable; the bus then picks up others
     #    along the way and returns. Total route budget = max_oneway_km * 3
     #    (generous: go out 30 km, serve a cluster, return ~30 km + ~30 km detour)
-    active_indices = [0]   # depot always included
-    dropped_nodes  = []
-    dropped_demand = 0
+    active_indices        = [0]   # depot always included
+    dropped_nodes         = []
+    dropped_demand        = 0
+    distance_dropped_count = 0   # dropped because too far from depot
 
     for i in range(1, len(df)):
         if df.iloc[i][shift_column] > 0:
@@ -56,6 +57,7 @@ def run_optimization(df, shift_column,
             else:
                 dropped_nodes.append(i)
                 dropped_demand += int(df.iloc[i][shift_column])
+                distance_dropped_count += 1
 
     if len(active_indices) <= 1:
         return {
@@ -158,10 +160,12 @@ def run_optimization(df, shift_column,
             buses_used += 1
 
     # Detect stops OR-Tools dropped due to fleet / distance constraints
+    fleet_dropped_count = 0
     for node_idx in range(1, n):
         if node_idx not in visited_nodes and demands[node_idx] > 0:
             dropped_nodes.append(active_indices[node_idx])
             dropped_demand += demands[node_idx]
+            fleet_dropped_count += 1
 
     optimized_km   = total_dist / 1000.0
     distance_saved = baseline_km - optimized_km
@@ -169,17 +173,19 @@ def run_optimization(df, shift_column,
     emissions_kg   = distance_saved * 0.67
 
     return {
-        "status":                "Success",
-        "baseline_distance_km":  round(baseline_km, 2),
-        "optimized_distance_km": round(optimized_km, 2),
-        "distance_saved_km":     round(distance_saved, 2),
-        "cost_saved_lkr":        round(cost_saved, 2),
-        "emissions_saved_kg":    round(emissions_kg, 2),
-        "routes":                routes,
-        "buses_used":            buses_used,
-        "effective_fleet":       effective_fleet,
-        "dropped_nodes":         dropped_nodes,
-        "dropped_demand":        dropped_demand,
-        "active_stops":          len(active_indices) - 1,
-        "total_budget_km":       round(total_budget_km, 1),
+        "status":                  "Success",
+        "baseline_distance_km":    round(baseline_km, 2),
+        "optimized_distance_km":   round(optimized_km, 2),
+        "distance_saved_km":       round(distance_saved, 2),
+        "cost_saved_lkr":          round(cost_saved, 2),
+        "emissions_saved_kg":      round(emissions_kg, 2),
+        "routes":                  routes,
+        "buses_used":              buses_used,
+        "effective_fleet":         effective_fleet,
+        "dropped_nodes":           dropped_nodes,
+        "dropped_demand":          dropped_demand,
+        "distance_dropped_count":  distance_dropped_count,
+        "fleet_dropped_count":     fleet_dropped_count,
+        "active_stops":            len(active_indices) - 1,
+        "total_budget_km":         round(total_budget_km, 1),
     }

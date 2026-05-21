@@ -478,7 +478,9 @@ td {
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
+.num.muted { color: var(--muted); }
 .total { color: var(--accent); font-weight: 700; }
+th.muted-col { color: #3d4f60; }
 
 .loading-msg {
     text-align: center;

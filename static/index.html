@@ -40,7 +40,7 @@
     <div class="control-group">
         <label>Max One-Way Trip — <span id="distVal">30</span> km</label>
         <input type="range" id="distSlider" min="5" max="80" value="30" step="5">
-        <p class="hint">Road km from factory to furthest stop. Total route budget = 3x this value.</p>
+        <p class="hint">Road km from factory to furthest stop. Each bus route is capped at <b>3× this value</b> total (out + stops + return).</p>
     </div>
 
     <div class="control-group">
@@ -126,7 +126,7 @@
             <div class="metric-card">
                 <div class="metric-label">CO₂ Emissions Saved</div>
                 <div class="metric-val" id="m-co2">—</div>
-                <div class="metric-sub">kg CO₂ per shift</div>
+                <div class="metric-sub">kg CO₂ saved this shift <span style="opacity:0.5;font-size:11px">@ 0.67 kg/km diesel</span></div>
             </div>
         </div>
     </section>
@@ -189,7 +189,7 @@
             <div class="info-card">
                 <div class="info-tag">Workforce</div>
                 <h3>Workforce Estimation</h3>
-                <p>MAS Active Controline Pallekele operates two full shift cycles daily. Summing passenger demands across all 99 stops for both Collect shifts gives an estimated <b id="workforceEst">—</b> total employees serviced by the transport network.</p>
+                <p>MAS Active Controline Pallekele operates two full shift cycles daily. Summing passenger demands across all 99 stops for both Collect shifts gives an estimated <b id="workforceEst">—</b> unique employees who use the company transport per day (morning + afternoon shifts combined). Drop shifts carry the same people home, so they are not counted twice.</p>
             </div>
             <div class="info-card">
                 <div class="info-tag">Shifts</div>
@@ -216,10 +216,10 @@
                         <th>#</th>
                         <th>Destination / Area</th>
                         <th title="Morning shift: picked up at home">10 AM Collect ↑</th>
-                        <th title="Same morning shift workers dropped home">2 PM Drop ↓</th>
+                        <th class="muted-col" title="Same morning-shift workers dropped home — mirrors 10 AM Collect">2 PM Drop ↓ ═</th>
                         <th title="Afternoon shift: picked up at home">2 PM Collect ↑</th>
-                        <th title="Same afternoon shift workers dropped home">10 PM Drop ↓</th>
-                        <th>Daily Total</th>
+                        <th class="muted-col" title="Same afternoon-shift workers dropped home — mirrors 2 PM Collect">10 PM Drop ↓ ═</th>
+                        <th title="Unique employees at this stop (morning + afternoon workers)">Unique Workers</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>

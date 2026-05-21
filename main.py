@@ -20,11 +20,15 @@ class OptimizeRequest(BaseModel):
 
 @app.get("/api/generate")
 def generate_data(radius_km: int = Query(default=DEFAULT_RADIUS_KM), fresh: bool = False):
+    import time
     global _cache
     cache_key = radius_km
     if cache_key not in _cache or fresh:
-        print(f"Generating dataset for radius={radius_km} km...")
-        df = generate_network_data(99, radius_km=radius_km)
+        # Use a time-based seed on fresh regeneration so demand numbers change each time.
+        # Keep seed=42 only for the initial cached load (reproducible first view).
+        seed = int(time.time()) if fresh else 42
+        print(f"Generating dataset for radius={radius_km} km (seed={seed})...")
+        df = generate_network_data(99, seed=seed, radius_km=radius_km)
         _cache[cache_key] = df.to_dict(orient="records")
         print("Done. Dataset cached.")
     return _cache[cache_key]

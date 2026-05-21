@@ -210,16 +210,17 @@ function populateTable() {
     tableBody.innerHTML = '';
     currentData.forEach((row, i) => {
         if (i === 0) return;
-        const total = row.Demand_10AM_Collect + row.Demand_2PM_Drop + row.Demand_2PM_Collect + row.Demand_10PM_Drop;
+        // Unique workers = morning shift + afternoon shift (drops are same people returning)
+        const uniqueWorkers = (row.Demand_10AM_Collect || 0) + (row.Demand_2PM_Collect || 0);
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${row.Route_ID}</td>
             <td>${row.Destination_Name}</td>
             <td class="num">${row.Demand_10AM_Collect}</td>
-            <td class="num">${row.Demand_2PM_Drop}</td>
+            <td class="num muted">${row.Demand_2PM_Drop}</td>
             <td class="num">${row.Demand_2PM_Collect}</td>
-            <td class="num">${row.Demand_10PM_Drop}</td>
-            <td class="num total">${total}</td>
+            <td class="num muted">${row.Demand_10PM_Drop}</td>
+            <td class="num total">${uniqueWorkers}</td>
         `;
         tableBody.appendChild(tr);
     });
@@ -302,7 +303,12 @@ function updateMetrics(res, fuelCost, fleetSize) {
 
     if (res.dropped_demand > 0) {
         const oneway = parseInt(distSlider.value);
-        statusAlert.innerHTML = `⚠️ <b>${res.dropped_nodes.length} stops excluded (${res.dropped_demand} passengers):</b> Their road distance from the factory exceeds your <b>${oneway} km one-way limit</b>. These workers live too far. Increase Max One-Way Trip distance or reduce the Recruitment Radius.`;
+        const parts = [];
+        if (res.distance_dropped_count > 0)
+            parts.push(`<b>${res.distance_dropped_count} stops</b> are beyond your <b>${oneway} km one-way road limit</b> (too far from factory)`);
+        if (res.fleet_dropped_count > 0)
+            parts.push(`<b>${res.fleet_dropped_count} stops</b> could not be served with only <b>${fleetSize} buses</b> (fleet too small for demand)`);
+        statusAlert.innerHTML = `⚠️ <b>${res.dropped_nodes.length} stops excluded (${res.dropped_demand} passengers unserved):</b> ${parts.join(' — and ')}. Adjust the relevant parameters to serve them.`;
         statusAlert.className = 'alert warning';
     }
 }
