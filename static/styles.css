@@ -361,11 +361,16 @@ input[type=range] {
     width: 100%;
     height: 100%;
 }
-/* Ensure MapLibre canvas fills container */
-#map-container .maplibregl-map,
-#map-container canvas {
-    width: 100% !important;
-    height: 100% !important;
+/* MapLibre fills the container */
+#map-container .maplibregl-map {
+    width: 100%;
+    height: 100%;
+}
+/* deck.gl overlay canvas sits on top */
+#map-container .deck-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
 }
 .map-legend {
     position: absolute;

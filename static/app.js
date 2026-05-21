@@ -108,7 +108,7 @@ let _map;
 function initMap() {
     _map = new maplibregl.Map({
         container: 'map-container',
-        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        style: 'https://tiles.openfreemap.org/styles/dark',
         center: [DEPOT_LON, DEPOT_LAT],
         zoom: 10.5,
         pitch: 45,
@@ -119,15 +119,15 @@ function initMap() {
         interleaved: false,
         layers: [],
         getTooltip: ({object}) => object && {
-            html: `<div>${object.name || ''}${object.demand ? '<br/>' + object.demand : ''}</div>`,
+            html: `<div style="font-weight:600">${object.name || ''}</div>${object.demand ? `<div style="color:#94a3b8;margin-top:4px">${object.demand}</div>` : ''}`,
             style: {
-                background: 'rgba(15,20,35,0.92)',
+                background: 'rgba(15,20,35,0.95)',
                 color: '#e2e8f0',
                 fontSize: '13px',
-                padding: '8px 12px',
+                padding: '10px 14px',
                 borderRadius: '8px',
-                border: '1px solid rgba(99,179,237,0.3)',
-                pointerEvents: 'none'
+                border: '1px solid rgba(99,179,237,0.4)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
             }
         }
     });
