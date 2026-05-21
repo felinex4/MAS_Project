@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import requests
 import math
-import streamlit as st
+from functools import lru_cache
 
 def get_osrm_distance_matrix(lats, lons):
     """Fetches real road distance matrix from OSRM public API (max 100 coords)."""
@@ -16,7 +16,7 @@ def get_osrm_distance_matrix(lats, lons):
     else:
         raise Exception(f"OSRM API error: {response.status_code}")
 
-@st.cache_data
+@lru_cache(maxsize=32)
 def fetch_matrix_cached(lats, lons):
     return get_osrm_distance_matrix(lats, lons)
 

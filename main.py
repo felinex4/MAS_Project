@@ -42,8 +42,11 @@ def optimize(req: OptimizeRequest):
     )
     return result
 
+import os
+
 # Serve static frontend
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+if os.path.isdir("static"):
+    app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
