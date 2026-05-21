@@ -137,13 +137,26 @@ def generate_network_data(num_destinations=99, seed=42, radius_km=DEFAULT_RADIUS
             "Destination_Name":   f"{names[i]} — Stop {i+1}",
             "Latitude":           lat,
             "Longitude":          lon,
+            # Morning-shift workers at this stop (same people: collected 10AM, dropped 2PM)
             "Demand_10AM_Collect": int(rng.integers(5, 26)),
-            "Demand_2PM_Drop":     int(rng.integers(5, 26)),
+            # Afternoon-shift workers at this stop (same people: collected 2PM, dropped 10PM)
             "Demand_2PM_Collect":  int(rng.integers(5, 26)),
-            "Demand_10PM_Drop":    int(rng.integers(5, 26)),
         })
 
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+
+    # Enforce logical symmetry:
+    #   The people collected at 10 AM are the same ones dropped at 2 PM.
+    #   The people collected at 2 PM are the same ones dropped at 10 PM.
+    df["Demand_2PM_Drop"]  = df["Demand_10AM_Collect"]
+    df["Demand_10PM_Drop"] = df["Demand_2PM_Collect"]
+
+    # Reorder columns to a logical display order
+    df = df[["Route_ID", "Destination_Name", "Latitude", "Longitude",
+             "Demand_10AM_Collect", "Demand_2PM_Drop",
+             "Demand_2PM_Collect", "Demand_10PM_Drop"]]
+
+    return df
 
 
 if __name__ == "__main__":
