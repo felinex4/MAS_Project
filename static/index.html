@@ -81,7 +81,7 @@
             </div>
         </div>
         <div class="header-right-badges">
-            <div class="headcount-badge">👥 <span id="workforceEst">~2,500</span> Workforce</div>
+            <div class="headcount-badge"><span id="workforceEst">~2,500</span> Workforce</div>
             <div class="shift-badge" id="shiftBadge">10:00 AM — Collect</div>
         </div>
     </header>
@@ -162,28 +162,28 @@
             </p>
             <div class="method-detail-grid">
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🏭</div>
+                    <div class="method-detail-icon">▣</div>
                     <div>
                         <b>Single Depot</b><br>
                         All buses originate from and return to the MAS Controline Pallekele factory. This is the depot node in the graph.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">📍</div>
+                    <div class="method-detail-icon">●</div>
                     <div>
                         <b>99 Passenger Stops</b><br>
                         Each stop has a fixed passenger demand (workers to collect or drop). The solver must decide which bus visits which stops.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🚌</div>
+                    <div class="method-detail-icon">▪</div>
                     <div>
                         <b>Homogeneous Fleet</b><br>
                         All buses are identical — same seat capacity. The solver allocates the minimum number of buses needed to cover all stops.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🎯</div>
+                    <div class="method-detail-icon">◎</div>
                     <div>
                         <b>Objective Function</b><br>
                         Minimise the <b>total distance (km)</b> travelled by the entire fleet across all routes combined for a single shift.
@@ -206,28 +206,28 @@
             </p>
             <div class="method-detail-grid">
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🗺️</div>
+                    <div class="method-detail-icon">◈</div>
                     <div>
                         <b>OSRM Table API</b><br>
                         The Open Source Routing Machine (OSRM) is called with all 100 coordinates (1 depot + 99 stops) to produce a <b>100×100 pairwise road distance matrix</b> in a single API call.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🛣️</div>
+                    <div class="method-detail-icon">═</div>
                     <div>
                         <b>OpenStreetMap Data</b><br>
                         OSRM uses real OpenStreetMap road network data — actual driving routes, road types, and speeds. All distances are in kilometres.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">⚡</div>
+                    <div class="method-detail-icon">↻</div>
                     <div>
                         <b>LRU Caching</b><br>
                         The distance matrix is cached in memory. Re-running the optimiser with different fleet/capacity/cost parameters reuses the same matrix — no repeated API calls.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🔍</div>
+                    <div class="method-detail-icon">⊘</div>
                     <div>
                         <b>Pre-filtering</b><br>
                         Before solving, any stop whose road distance from the depot exceeds the user-set one-way limit is <b>excluded</b> before entering the solver — reducing problem size.
@@ -287,7 +287,7 @@
                 </div>
             </div>
             <div class="method-note">
-                💡 <b>Why GLS over simpler local search?</b> Simple hill-climbing gets trapped in local optima (a good solution that cannot be improved by small changes, but is not globally optimal). GLS's penalty mechanism forces the solver to explore beyond local optima, consistently producing better final solutions.
+                <b>Note:</b> <b>Why GLS over simpler local search?</b> Simple hill-climbing gets trapped in local optima (a good solution that cannot be improved by small changes, but is not globally optimal). GLS's penalty mechanism forces the solver to explore beyond local optima, consistently producing better final solutions.
             </div>
         </div>
 
@@ -300,28 +300,28 @@
             </p>
             <div class="method-detail-grid">
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">📏</div>
+                    <div class="method-detail-icon">┃</div>
                     <div>
                         <b>Baseline Distance</b><br>
                         Sum of all individual round trips: <code>∑ (depot→stop + stop→depot)</code> for every active stop. Uses real OSRM road distances.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">✅</div>
+                    <div class="method-detail-icon">✓</div>
                     <div>
                         <b>Optimised Distance</b><br>
                         Total kilometres driven by the entire fleet under the CVRP solution — buses share routes and collect multiple stops in one trip.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">💰</div>
+                    <div class="method-detail-icon">$</div>
                     <div>
                         <b>Financial Saving</b><br>
                         <code>(Baseline − Optimised) × Operating Cost/km</code>. Reported in LKR per shift. Directly represents daily fuel and operational savings.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🌱</div>
+                    <div class="method-detail-icon">↓</div>
                     <div>
                         <b>CO₂ Saving</b><br>
                         Saved km × 0.67 kg CO₂/km (standard diesel bus emission factor). Quantifies the environmental benefit of route consolidation.
@@ -345,31 +345,31 @@
             </p>
             <div class="or-architecture">
                 <div class="or-arch-card">
-                    <div class="or-arch-icon">📦</div>
+                    <div class="or-arch-icon">■</div>
                     <div class="or-arch-label">OR-Tools Library</div>
                     <div class="or-arch-desc">Core C++ engine with Python wrapper (<code>ortools</code> package)</div>
                 </div>
                 <div class="or-arch-arrow">→</div>
                 <div class="or-arch-card">
-                    <div class="or-arch-icon">🔧</div>
+                    <div class="or-arch-icon">⚙</div>
                     <div class="or-arch-label">Constraint Solver</div>
                     <div class="or-arch-desc"><code>pywrapcp</code> — the constraint programming routing solver</div>
                 </div>
                 <div class="or-arch-arrow">→</div>
                 <div class="or-arch-card">
-                    <div class="or-arch-icon">🚚</div>
+                    <div class="or-arch-icon">⟶</div>
                     <div class="or-arch-label">Routing API</div>
                     <div class="or-arch-desc"><code>RoutingModel</code> + <code>RoutingIndexManager</code></div>
                 </div>
                 <div class="or-arch-arrow">→</div>
                 <div class="or-arch-card">
-                    <div class="or-arch-icon">✅</div>
+                    <div class="or-arch-icon">✓</div>
                     <div class="or-arch-label">Solution</div>
                     <div class="or-arch-desc">Optimised routes assigned to each vehicle</div>
                 </div>
             </div>
             <div class="method-note">
-                🎓 <b>Key Modules Used in This Project:</b><br>
+                <b>Reference:</b> <b>Key Modules Used in This Project:</b><br>
                 <code>from ortools.constraint_solver import routing_enums_pb2, pywrapcp</code><br><br>
                 • <code>pywrapcp</code> — Python wrapper around OR-Tools' C++ constraint programming solver<br>
                 • <code>routing_enums_pb2</code> — Protocol buffer enums for configuring search strategies<br>
@@ -419,7 +419,7 @@
             </div>
             <div class="code-mapping">
                 <div class="code-mapping-header">
-                    <span class="code-mapping-icon">💻</span>
+                    <span class="code-mapping-icon">≫</span>
                     <span>Code ↔ Math Mapping</span>
                 </div>
                 <div class="code-mapping-body">
@@ -483,7 +483,7 @@
 
             <div class="code-mapping">
                 <div class="code-mapping-header">
-                    <span class="code-mapping-icon">💻</span>
+                    <span class="code-mapping-icon">≫</span>
                     <span>How This Is Set in Code</span>
                 </div>
                 <div class="code-mapping-body">
@@ -506,7 +506,7 @@
                 </div>
             </div>
             <div class="method-note">
-                🎯 <b>In plain English:</b> OR-Tools doesn't require you to write <code>min Z = ...</code> explicitly. Instead, you register a <b>cost callback</b> function using <code>SetArcCostEvaluatorOfAllVehicles()</code>, and OR-Tools <em>automatically</em> minimises the total sum of those costs across all routes. This is the implicit objective function.
+                <b>Note:</b> <b>In plain English:</b> OR-Tools doesn't require you to write <code>min Z = ...</code> explicitly. Instead, you register a <b>cost callback</b> function using <code>SetArcCostEvaluatorOfAllVehicles()</code>, and OR-Tools <em>automatically</em> minimises the total sum of those costs across all routes. This is the implicit objective function.
             </div>
         </div>
 
@@ -536,7 +536,7 @@
                     <p class="constraint-plain"><b>In plain English:</b> The total number of passengers picked up by any single bus cannot exceed its seat capacity. If a bus has 50 seats, the sum of passengers across all stops on that bus's route must be ≤ 50.</p>
                     <div class="code-mapping">
                         <div class="code-mapping-header">
-                            <span class="code-mapping-icon">💻</span>
+                            <span class="code-mapping-icon">≫</span>
                             <span>Implementation in Code</span>
                         </div>
                         <div class="code-mapping-body">
@@ -574,7 +574,7 @@
                     <p class="constraint-plain"><b>In plain English:</b> Each bus's total round-trip distance (depot → stops → depot) cannot exceed 3× the one-way limit. If Max One-Way is 30 km, each route is capped at 90 km total. This prevents workers from spending excessive time commuting.</p>
                     <div class="code-mapping">
                         <div class="code-mapping-header">
-                            <span class="code-mapping-icon">💻</span>
+                            <span class="code-mapping-icon">≫</span>
                             <span>Implementation in Code</span>
                         </div>
                         <div class="code-mapping-body">
@@ -607,7 +607,7 @@
                     <p class="constraint-plain"><b>In plain English:</b> The solver cannot use more buses than the user specifies. When the fleet is insufficient to serve all stops, OR-Tools uses a <b>disjunction mechanism</b> — it makes each stop "optional" with a high penalty for dropping. The solver will prefer to serve all stops, but mathematically <em>may</em> drop some if constrained.</p>
                     <div class="code-mapping">
                         <div class="code-mapping-header">
-                            <span class="code-mapping-icon">💻</span>
+                            <span class="code-mapping-icon">≫</span>
                             <span>Implementation in Code</span>
                         </div>
                         <div class="code-mapping-body">
@@ -629,28 +629,28 @@
                 <h4 class="implicit-title">Implicit Constraints (Built Into OR-Tools Routing API)</h4>
                 <div class="implicit-grid">
                     <div class="implicit-card">
-                        <div class="implicit-icon">🔄</div>
+                        <div class="implicit-icon">↺</div>
                         <div>
                             <b>Each stop visited exactly once</b><br>
                             The Routing API guarantees that no two buses visit the same stop. Each stop appears on exactly one route (unless dropped via disjunction).
                         </div>
                     </div>
                     <div class="implicit-card">
-                        <div class="implicit-icon">🏠</div>
+                        <div class="implicit-icon">△</div>
                         <div>
                             <b>All routes start and end at depot</b><br>
                             Every bus begins at node 0 (the factory depot) and must return to node 0 after serving all its assigned stops.
                         </div>
                     </div>
                     <div class="implicit-card">
-                        <div class="implicit-icon">🔗</div>
+                        <div class="implicit-icon">⟷</div>
                         <div>
                             <b>Route continuity</b><br>
                             Each route is a connected sequence of nodes — the bus must travel through consecutive arcs (edges) without teleporting.
                         </div>
                     </div>
                     <div class="implicit-card">
-                        <div class="implicit-icon">🔢</div>
+                        <div class="implicit-icon">#</div>
                         <div>
                             <b>Non-negative distances</b><br>
                             All arc costs (distances) must be ≥ 0. This is satisfied by using real road distances from OSRM.
@@ -692,7 +692,7 @@
                         <h4>Phase 1: Initial Solution — Path Cheapest Arc</h4>
                         <p>A <b>constructive heuristic</b> builds the first feasible solution. Starting from the depot, it greedily extends the current route by always choosing the <b>nearest unvisited stop</b> that doesn't violate any constraint. When a bus is full or its distance budget is exhausted, a new bus starts.</p>
                         <div class="pipeline-code"><code>params.first_solution_strategy = FirstSolutionStrategy.PATH_CHEAPEST_ARC</code></div>
-                        <div class="pipeline-note">⚡ This runs in <b>O(n²)</b> time — very fast, but produces a suboptimal "greedy" solution.</div>
+                        <div class="pipeline-note">Note: This runs in <b>O(n²)</b> time — very fast, but produces a suboptimal "greedy" solution.</div>
                     </div>
                 </div>
                 <div class="pipeline-connector"></div>
@@ -751,19 +751,19 @@
             <div class="dataflow">
                 <div class="dataflow-row">
                     <div class="dataflow-node input-node">
-                        <div class="dataflow-node-icon">📊</div>
+                        <div class="dataflow-node-icon">◧</div>
                         <div class="dataflow-node-label">Input Data</div>
                         <div class="dataflow-node-detail">99 stops with coordinates + passenger demands per shift</div>
                     </div>
                     <div class="dataflow-arrow">→</div>
                     <div class="dataflow-node process-node">
-                        <div class="dataflow-node-icon">🌐</div>
+                        <div class="dataflow-node-icon">◉</div>
                         <div class="dataflow-node-label">OSRM API</div>
                         <div class="dataflow-node-detail">100×100 real road distance matrix (km)</div>
                     </div>
                     <div class="dataflow-arrow">→</div>
                     <div class="dataflow-node process-node">
-                        <div class="dataflow-node-icon">🔍</div>
+                        <div class="dataflow-node-icon">⊘</div>
                         <div class="dataflow-node-label">Pre-filtering</div>
                         <div class="dataflow-node-detail">Drop stops beyond one-way distance limit</div>
                     </div>
@@ -771,19 +771,19 @@
                 <div class="dataflow-connector-down">↓</div>
                 <div class="dataflow-row reverse">
                     <div class="dataflow-node output-node">
-                        <div class="dataflow-node-icon">🗺️</div>
+                        <div class="dataflow-node-icon">◈</div>
                         <div class="dataflow-node-label">Map Rendering</div>
                         <div class="dataflow-node-detail">DeckGL + OSRM route geometry tracing</div>
                     </div>
                     <div class="dataflow-arrow reverse-arrow">←</div>
                     <div class="dataflow-node output-node">
-                        <div class="dataflow-node-icon">📋</div>
+                        <div class="dataflow-node-icon">☰</div>
                         <div class="dataflow-node-label">Solution Extraction</div>
                         <div class="dataflow-node-detail">Follow NextVar chains → bus routes + KPIs</div>
                     </div>
                     <div class="dataflow-arrow reverse-arrow">←</div>
                     <div class="dataflow-node solver-node">
-                        <div class="dataflow-node-icon">⚙️</div>
+                        <div class="dataflow-node-icon">⚙</div>
                         <div class="dataflow-node-label">OR-Tools Solver</div>
                         <div class="dataflow-node-detail">CVRP: Cheapest Arc → GLS (4s) → Best routes</div>
                     </div>
@@ -847,7 +847,7 @@
                 </table>
             </div>
             <div class="method-note">
-                ✅ <b>Conclusion:</b> Google OR-Tools provides the best balance of <b>solution quality</b>, <b>speed</b>, <b>ease of use</b>, and <b>zero licensing cost</b> — making it ideal for this real-world CVRP application in a factory transport context.
+                <b>Conclusion:</b> Google OR-Tools provides the best balance of <b>solution quality</b>, <b>speed</b>, <b>ease of use</b>, and <b>zero licensing cost</b> — making it ideal for this real-world CVRP application in a factory transport context.
             </div>
         </div>
 
@@ -915,7 +915,7 @@
                 Random geographic coordinates are generated uniformly within a user-configurable recruitment radius (default 40 km) around the MAS Controline Pallekele factory (7.2842°N, 80.7061°E). A bounding box is sampled first, then a Haversine distance filter discards points outside the circular radius — ensuring all stops are realistically reachable from the factory.
             </p>
             <div class="method-note">
-                📐 <b>Why uniform distribution?</b> Workers in a real factory live spread across the surrounding area without a strong geographic bias. A uniform distribution across the radius approximates this spread. A pool of 5× the required stops is generated to ensure enough valid candidates survive the road-snapping step.
+                <b>Note:</b> <b>Why uniform distribution?</b> Workers in a real factory live spread across the surrounding area without a strong geographic bias. A uniform distribution across the radius approximates this spread. A pool of 5× the required stops is generated to ensure enough valid candidates survive the road-snapping step.
             </div>
         </div>
 
@@ -927,28 +927,28 @@
             </p>
             <div class="method-detail-grid">
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🔀</div>
+                    <div class="method-detail-icon">⇆</div>
                     <div>
                         <b>40 Parallel Threads</b><br>
                         All road-snap requests are fired simultaneously using Python's <code>ThreadPoolExecutor</code>. This reduces dataset generation from ~2 minutes (sequential) to ~8–12 seconds.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">📌</div>
+                    <div class="method-detail-icon">▸</div>
                     <div>
                         <b>100% Routable Stops</b><br>
                         Only road-snapped coordinates are accepted. Any snapped point that exceeds the radius limit is discarded. Fallback coordinates near the depot pad the dataset if too few candidates survive.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🗺️</div>
+                    <div class="method-detail-icon">◈</div>
                     <div>
                         <b>OpenStreetMap Network</b><br>
                         OSRM uses the Sri Lanka road network from OSM — including A-grade, B-grade, and local roads in the Kandy district. All snapped stops are reachable by standard bus.
                     </div>
                 </div>
                 <div class="method-detail-card">
-                    <div class="method-detail-icon">🏷️</div>
+                    <div class="method-detail-icon">≡</div>
                     <div>
                         <b>Area Name Labelling</b><br>
                         Each accepted stop is assigned a real Kandy district area name (99 names pre-loaded) for realistic readability, shuffled randomly using the seed.
@@ -982,7 +982,7 @@
                 </div>
             </div>
             <div class="method-note">
-                🎲 <b>Seed behaviour:</b> The first page load uses seed 42 (reproducible, consistent demo). Each click of "Regenerate Dataset" uses a time-based seed — producing genuinely different passenger distributions to simulate day-to-day variation in attendance.
+                <b>Note:</b> <b>Seed behaviour:</b> The first page load uses seed 42 (reproducible, consistent demo). Each click of "Regenerate Dataset" uses a time-based seed — producing genuinely different passenger distributions to simulate day-to-day variation in attendance.
             </div>
         </div>
 
@@ -1012,7 +1012,7 @@
                 </div>
             </div>
             <div class="method-note" style="margin-top:20px">
-                ⚙️ Each of the four shift events is <b>independently optimisable</b> — select any shift in the sidebar to run the CVRP solver for that specific transport event. Route plans, bus deployments, and cost savings are computed per-shift.
+                <b>Note:</b> Each of the four shift events is <b>independently optimisable</b> — select any shift in the sidebar to run the CVRP solver for that specific transport event. Route plans, bus deployments, and cost savings are computed per-shift.
             </div>
         </div>
     </section>
