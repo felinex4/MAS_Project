@@ -130,6 +130,10 @@ def generate_network_data(num_destinations=99, seed=42, radius_km=DEFAULT_RADIUS
         "Demand_2PM_Collect":  0,
         "Demand_10PM_Drop":    0,
     }]
+    # Target total headcount: ~2500 employees across 2 shifts
+    # Each shift group targets ~1250 unique workers
+    TOTAL_HEADCOUNT = 2500
+    TARGET_PER_SHIFT = TOTAL_HEADCOUNT // 2  # 1250 per shift
 
     for i, (lat, lon) in enumerate(accepted):
         data.append({
@@ -137,13 +141,27 @@ def generate_network_data(num_destinations=99, seed=42, radius_km=DEFAULT_RADIUS
             "Destination_Name":   f"{names[i]} — Stop {i+1}",
             "Latitude":           lat,
             "Longitude":          lon,
-            # Morning-shift workers at this stop (same people: collected 10AM, dropped 2PM)
+            # Temporary raw demands — will be scaled below
             "Demand_10AM_Collect": int(rng.integers(5, 26)),
-            # Afternoon-shift workers at this stop (same people: collected 2PM, dropped 10PM)
             "Demand_2PM_Collect":  int(rng.integers(5, 26)),
         })
 
     df = pd.DataFrame(data)
+
+    # ── Scale demands to match real headcount (~2500 total) ──────────────
+    # Morning shift workers → target ~1250
+    raw_morning = df.loc[1:, "Demand_10AM_Collect"].values.astype(float)
+    if raw_morning.sum() > 0:
+        scaled_morning = np.round(raw_morning / raw_morning.sum() * TARGET_PER_SHIFT).astype(int)
+        scaled_morning = np.maximum(scaled_morning, 1)  # at least 1 worker per stop
+        df.loc[1:, "Demand_10AM_Collect"] = scaled_morning
+
+    # Afternoon shift workers → target ~1250
+    raw_afternoon = df.loc[1:, "Demand_2PM_Collect"].values.astype(float)
+    if raw_afternoon.sum() > 0:
+        scaled_afternoon = np.round(raw_afternoon / raw_afternoon.sum() * TARGET_PER_SHIFT).astype(int)
+        scaled_afternoon = np.maximum(scaled_afternoon, 1)  # at least 1 worker per stop
+        df.loc[1:, "Demand_2PM_Collect"] = scaled_afternoon
 
     # Enforce logical symmetry:
     #   The people collected at 10 AM are the same ones dropped at 2 PM.

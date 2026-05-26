@@ -77,10 +77,13 @@
             <button class="sidebar-toggle" id="sidebarToggle">Parameters</button>
             <div>
                 <h1>MAS Active Controline</h1>
-                <p>Bus Transport Routing Optimisation — Kandy District, Sri Lanka</p>
+                <p>Bus Transport Routing Optimisation — Kandy District, Sri Lanka &nbsp;|&nbsp; <b>~2,500 Employees</b></p>
             </div>
         </div>
-        <div class="shift-badge" id="shiftBadge">10:00 AM — Collect</div>
+        <div class="header-right-badges">
+            <div class="headcount-badge">👥 <span id="workforceEst">~2,500</span> Workforce</div>
+            <div class="shift-badge" id="shiftBadge">10:00 AM — Collect</div>
+        </div>
     </header>
 
     <!-- Section 1: KPI Metrics -->
@@ -328,10 +331,582 @@
         </div>
     </section>
 
+    <!-- Section: How Google OR-Tools Works — Under the Hood -->
+    <section class="section" id="or-tools-section">
+        <h2 class="section-title">How Google OR-Tools Works — Under the Hood</h2>
+        <p class="section-desc">Google OR-Tools is an open-source Operations Research library developed by Google. It provides solvers for optimisation problems including linear programming, constraint programming, vehicle routing, and graph algorithms. Below is a detailed breakdown of exactly how OR-Tools is used in this project — from mathematical formulation to code implementation.</p>
+
+        <!-- What is OR-Tools -->
+        <div class="method-block or-highlight">
+            <div class="method-step-badge">Overview</div>
+            <h3 class="method-title">What is Google OR-Tools?</h3>
+            <p class="method-desc">
+                Google OR-Tools (Operations Research Tools) is a free, open-source software suite developed by <b>Google's Optimization Team</b>. It is written in C++ with bindings for Python, Java, and C#. OR-Tools provides state-of-the-art algorithms for solving combinatorial optimisation problems that are too complex for brute-force approaches.
+            </p>
+            <div class="or-architecture">
+                <div class="or-arch-card">
+                    <div class="or-arch-icon">📦</div>
+                    <div class="or-arch-label">OR-Tools Library</div>
+                    <div class="or-arch-desc">Core C++ engine with Python wrapper (<code>ortools</code> package)</div>
+                </div>
+                <div class="or-arch-arrow">→</div>
+                <div class="or-arch-card">
+                    <div class="or-arch-icon">🔧</div>
+                    <div class="or-arch-label">Constraint Solver</div>
+                    <div class="or-arch-desc"><code>pywrapcp</code> — the constraint programming routing solver</div>
+                </div>
+                <div class="or-arch-arrow">→</div>
+                <div class="or-arch-card">
+                    <div class="or-arch-icon">🚚</div>
+                    <div class="or-arch-label">Routing API</div>
+                    <div class="or-arch-desc"><code>RoutingModel</code> + <code>RoutingIndexManager</code></div>
+                </div>
+                <div class="or-arch-arrow">→</div>
+                <div class="or-arch-card">
+                    <div class="or-arch-icon">✅</div>
+                    <div class="or-arch-label">Solution</div>
+                    <div class="or-arch-desc">Optimised routes assigned to each vehicle</div>
+                </div>
+            </div>
+            <div class="method-note">
+                🎓 <b>Key Modules Used in This Project:</b><br>
+                <code>from ortools.constraint_solver import routing_enums_pb2, pywrapcp</code><br><br>
+                • <code>pywrapcp</code> — Python wrapper around OR-Tools' C++ constraint programming solver<br>
+                • <code>routing_enums_pb2</code> — Protocol buffer enums for configuring search strategies<br>
+                • <code>RoutingIndexManager</code> — Maps between solver's internal indices and user-defined node IDs<br>
+                • <code>RoutingModel</code> — The main model object that holds variables, constraints, and the objective
+            </div>
+        </div>
+
+        <!-- Decision Variables -->
+        <div class="method-block">
+            <div class="method-step-badge">Part A</div>
+            <h3 class="method-title">Decision Variables — What the Solver Decides</h3>
+            <p class="method-desc">
+                In any optimisation problem, <b>decision variables</b> are the unknowns that the solver must assign values to. In the CVRP solved by OR-Tools, the solver decides which bus visits which stops and in what order.
+            </p>
+            <div class="var-table-wrapper">
+                <table class="var-table">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Notation</th>
+                            <th>Type</th>
+                            <th>What It Means</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Route assignment</b></td>
+                            <td><span class="math-var">x<sub>ijk</sub></span></td>
+                            <td>Binary (0 or 1)</td>
+                            <td>= 1 if bus <i>k</i> travels directly from stop <i>i</i> to stop <i>j</i>; 0 otherwise</td>
+                        </tr>
+                        <tr>
+                            <td><b>Next variable</b></td>
+                            <td><span class="math-var">NextVar(i)</span></td>
+                            <td>Integer</td>
+                            <td>OR-Tools' internal representation — for each node <i>i</i>, stores the index of the next node visited by the same bus</td>
+                        </tr>
+                        <tr>
+                            <td><b>Vehicle assignment</b></td>
+                            <td><span class="math-var">VehicleVar(i)</span></td>
+                            <td>Integer</td>
+                            <td>Which bus (0 to K−1) visits node <i>i</i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="code-mapping">
+                <div class="code-mapping-header">
+                    <span class="code-mapping-icon">💻</span>
+                    <span>Code ↔ Math Mapping</span>
+                </div>
+                <div class="code-mapping-body">
+                    <div class="code-line">
+                        <code>manager = pywrapcp.RoutingIndexManager(n, effective_fleet, 0)</code>
+                        <span class="code-explain">Creates the index manager: <b>n</b> nodes, <b>effective_fleet</b> buses, depot at node <b>0</b></span>
+                    </div>
+                    <div class="code-line">
+                        <code>routing = pywrapcp.RoutingModel(manager)</code>
+                        <span class="code-explain">Creates the routing model — this object holds all decision variables, constraints, and the objective function internally</span>
+                    </div>
+                    <div class="code-line">
+                        <code>solution.Value(routing.NextVar(idx))</code>
+                        <span class="code-explain">Reads the solver's decision: "after visiting node <i>idx</i>, which node does this bus visit next?"</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objective Function -->
+        <div class="method-block or-highlight">
+            <div class="method-step-badge">Part B</div>
+            <h3 class="method-title">Objective Function — What the Solver Minimises</h3>
+            <p class="method-desc">
+                The <b>objective function</b> is the mathematical expression that the solver tries to minimise (or maximise). In our CVRP, the objective is to <b>minimise the total distance</b> travelled by all buses combined across all routes.
+            </p>
+
+            <div class="objective-box">
+                <div class="objective-header">
+                    <span class="objective-label">OBJECTIVE FUNCTION</span>
+                    <span class="objective-type">Minimise</span>
+                </div>
+                <div class="objective-formula">
+                    <div class="formula-main">
+                        min Z = ∑<sub>k=1</sub><sup>K</sup> ∑<sub>i=0</sub><sup>n</sup> ∑<sub>j=0</sub><sup>n</sup> d<sub>ij</sub> · x<sub>ijk</sub>
+                    </div>
+                    <div class="formula-definitions">
+                        <div class="formula-def">
+                            <span class="formula-symbol">Z</span>
+                            <span class="formula-meaning">Total distance driven by the entire fleet (the value to minimise)</span>
+                        </div>
+                        <div class="formula-def">
+                            <span class="formula-symbol">K</span>
+                            <span class="formula-meaning">Number of buses in the fleet</span>
+                        </div>
+                        <div class="formula-def">
+                            <span class="formula-symbol">n</span>
+                            <span class="formula-meaning">Number of stops (nodes), including depot at index 0</span>
+                        </div>
+                        <div class="formula-def">
+                            <span class="formula-symbol">d<sub>ij</sub></span>
+                            <span class="formula-meaning">Real road distance from stop <i>i</i> to stop <i>j</i> (from OSRM, in metres)</span>
+                        </div>
+                        <div class="formula-def">
+                            <span class="formula-symbol">x<sub>ijk</sub></span>
+                            <span class="formula-meaning">Binary variable = 1 if bus <i>k</i> travels from <i>i</i> to <i>j</i>, else 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-mapping">
+                <div class="code-mapping-header">
+                    <span class="code-mapping-icon">💻</span>
+                    <span>How This Is Set in Code</span>
+                </div>
+                <div class="code-mapping-body">
+                    <div class="code-line">
+                        <code>def distance_callback(from_index, to_index):</code>
+                        <span class="code-explain">This function returns d<sub>ij</sub> — the road distance between any two nodes</span>
+                    </div>
+                    <div class="code-line">
+                        <code>&nbsp;&nbsp;return dist_int[manager.IndexToNode(from_index)][manager.IndexToNode(to_index)]</code>
+                        <span class="code-explain">Looks up the pre-computed OSRM distance matrix (integers, in metres)</span>
+                    </div>
+                    <div class="code-line">
+                        <code>transit_cb = routing.RegisterTransitCallback(distance_callback)</code>
+                        <span class="code-explain">Registers the distance callback with OR-Tools — the solver will call this millions of times during search</span>
+                    </div>
+                    <div class="code-line highlight-line">
+                        <code>routing.SetArcCostEvaluatorOfAllVehicles(transit_cb)</code>
+                        <span class="code-explain"><b>THIS IS THE OBJECTIVE FUNCTION.</b> It tells OR-Tools: "minimise the sum of all arc (edge) costs across all vehicles." The arc cost is the distance callback.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="method-note">
+                🎯 <b>In plain English:</b> OR-Tools doesn't require you to write <code>min Z = ...</code> explicitly. Instead, you register a <b>cost callback</b> function using <code>SetArcCostEvaluatorOfAllVehicles()</code>, and OR-Tools <em>automatically</em> minimises the total sum of those costs across all routes. This is the implicit objective function.
+            </div>
+        </div>
+
+        <!-- Constraints Deep Dive -->
+        <div class="method-block">
+            <div class="method-step-badge">Part C</div>
+            <h3 class="method-title">Constraints — The Rules the Solver Must Obey</h3>
+            <p class="method-desc">
+                Constraints are hard rules that every valid solution must satisfy. If a solution violates any constraint, OR-Tools rejects it. There are three explicit constraints and several implicit ones built into the Routing API.
+            </p>
+
+            <!-- Constraint 1: Capacity -->
+            <div class="constraint-deep">
+                <div class="constraint-deep-header">
+                    <span class="constraint-deep-num">C1</span>
+                    <span class="constraint-deep-title">Vehicle Capacity Constraint</span>
+                </div>
+                <div class="constraint-deep-body">
+                    <div class="constraint-math">
+                        <div class="constraint-formula">∑<sub>i ∈ Route(k)</sub> q<sub>i</sub> ≤ Q<sub>k</sub> &nbsp;&nbsp; ∀ k ∈ {1, ..., K}</div>
+                        <div class="constraint-legend">
+                            <span><b>q<sub>i</sub></b> = passenger demand at stop <i>i</i></span>
+                            <span><b>Q<sub>k</sub></b> = seat capacity of bus <i>k</i></span>
+                            <span><b>Route(k)</b> = set of stops visited by bus <i>k</i></span>
+                        </div>
+                    </div>
+                    <p class="constraint-plain"><b>In plain English:</b> The total number of passengers picked up by any single bus cannot exceed its seat capacity. If a bus has 50 seats, the sum of passengers across all stops on that bus's route must be ≤ 50.</p>
+                    <div class="code-mapping">
+                        <div class="code-mapping-header">
+                            <span class="code-mapping-icon">💻</span>
+                            <span>Implementation in Code</span>
+                        </div>
+                        <div class="code-mapping-body">
+                            <div class="code-line">
+                                <code>def demand_callback(from_index):</code>
+                                <span class="code-explain">Returns q<sub>i</sub> — passengers waiting at each stop</span>
+                            </div>
+                            <div class="code-line">
+                                <code>&nbsp;&nbsp;return demands[manager.IndexToNode(from_index)]</code>
+                                <span class="code-explain">Looks up the demand array (depot = 0, stops = random 5–25)</span>
+                            </div>
+                            <div class="code-line highlight-line">
+                                <code>routing.AddDimensionWithVehicleCapacity(demand_cb, 0, capacities, True, 'Capacity')</code>
+                                <span class="code-explain"><b>Enforces C1.</b> Parameters: callback, slack=0, max per vehicle=capacities list, start_cumul_to_zero=True, name='Capacity'</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Constraint 2: Distance -->
+            <div class="constraint-deep">
+                <div class="constraint-deep-header">
+                    <span class="constraint-deep-num">C2</span>
+                    <span class="constraint-deep-title">Maximum Route Distance Constraint</span>
+                </div>
+                <div class="constraint-deep-body">
+                    <div class="constraint-math">
+                        <div class="constraint-formula">∑<sub>(i,j) ∈ Route(k)</sub> d<sub>ij</sub> ≤ D<sub>max</sub> &nbsp;&nbsp; ∀ k ∈ {1, ..., K}</div>
+                        <div class="constraint-legend">
+                            <span><b>d<sub>ij</sub></b> = road distance from stop <i>i</i> to stop <i>j</i></span>
+                            <span><b>D<sub>max</sub></b> = 3 × (Max One-Way Distance)</span>
+                        </div>
+                    </div>
+                    <p class="constraint-plain"><b>In plain English:</b> Each bus's total round-trip distance (depot → stops → depot) cannot exceed 3× the one-way limit. If Max One-Way is 30 km, each route is capped at 90 km total. This prevents workers from spending excessive time commuting.</p>
+                    <div class="code-mapping">
+                        <div class="code-mapping-header">
+                            <span class="code-mapping-icon">💻</span>
+                            <span>Implementation in Code</span>
+                        </div>
+                        <div class="code-mapping-body">
+                            <div class="code-line">
+                                <code>total_budget_km = max_oneway_km * 3</code>
+                                <span class="code-explain">D<sub>max</sub> = 3 × user-set one-way limit (e.g. 30 km → 90 km budget)</span>
+                            </div>
+                            <div class="code-line highlight-line">
+                                <code>routing.AddDimension(transit_cb, 0, int(total_budget_km * 1000), True, 'Distance')</code>
+                                <span class="code-explain"><b>Enforces C2.</b> Creates a "Distance" dimension tracking cumulative distance per route, capping it at D<sub>max</sub> (in metres)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Constraint 3: Fleet Size -->
+            <div class="constraint-deep">
+                <div class="constraint-deep-header">
+                    <span class="constraint-deep-num">C3</span>
+                    <span class="constraint-deep-title">Fleet Size Constraint (Soft, with Penalties)</span>
+                </div>
+                <div class="constraint-deep-body">
+                    <div class="constraint-math">
+                        <div class="constraint-formula">Number of active routes ≤ K<sub>max</sub> (fleet size)</div>
+                        <div class="constraint-legend">
+                            <span>If demand > fleet capacity, OR-Tools <b>drops</b> least-critical stops instead of adding extra buses</span>
+                        </div>
+                    </div>
+                    <p class="constraint-plain"><b>In plain English:</b> The solver cannot use more buses than the user specifies. When the fleet is insufficient to serve all stops, OR-Tools uses a <b>disjunction mechanism</b> — it makes each stop "optional" with a high penalty for dropping. The solver will prefer to serve all stops, but mathematically <em>may</em> drop some if constrained.</p>
+                    <div class="code-mapping">
+                        <div class="code-mapping-header">
+                            <span class="code-mapping-icon">💻</span>
+                            <span>Implementation in Code</span>
+                        </div>
+                        <div class="code-mapping-body">
+                            <div class="code-line">
+                                <code>drop_penalty = int(total_budget_km * 1000 * 20)</code>
+                                <span class="code-explain">Very high penalty (cost) for dropping a stop — the solver avoids this unless absolutely necessary</span>
+                            </div>
+                            <div class="code-line highlight-line">
+                                <code>routing.AddDisjunction([manager.NodeToIndex(node_idx)], drop_penalty)</code>
+                                <span class="code-explain"><b>Enforces C3.</b> Makes each stop optional. If the solver drops stop <i>i</i>, it incurs <code>drop_penalty</code> added to the objective — forcing the solver to serve as many stops as possible</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Implicit Constraints -->
+            <div class="implicit-constraints">
+                <h4 class="implicit-title">Implicit Constraints (Built Into OR-Tools Routing API)</h4>
+                <div class="implicit-grid">
+                    <div class="implicit-card">
+                        <div class="implicit-icon">🔄</div>
+                        <div>
+                            <b>Each stop visited exactly once</b><br>
+                            The Routing API guarantees that no two buses visit the same stop. Each stop appears on exactly one route (unless dropped via disjunction).
+                        </div>
+                    </div>
+                    <div class="implicit-card">
+                        <div class="implicit-icon">🏠</div>
+                        <div>
+                            <b>All routes start and end at depot</b><br>
+                            Every bus begins at node 0 (the factory depot) and must return to node 0 after serving all its assigned stops.
+                        </div>
+                    </div>
+                    <div class="implicit-card">
+                        <div class="implicit-icon">🔗</div>
+                        <div>
+                            <b>Route continuity</b><br>
+                            Each route is a connected sequence of nodes — the bus must travel through consecutive arcs (edges) without teleporting.
+                        </div>
+                    </div>
+                    <div class="implicit-card">
+                        <div class="implicit-icon">🔢</div>
+                        <div>
+                            <b>Non-negative distances</b><br>
+                            All arc costs (distances) must be ≥ 0. This is satisfied by using real road distances from OSRM.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Solver Pipeline -->
+        <div class="method-block or-highlight">
+            <div class="method-step-badge">Part D</div>
+            <h3 class="method-title">The OR-Tools Solver Pipeline — Step by Step</h3>
+            <p class="method-desc">
+                When <code>routing.SolveWithParameters(params)</code> is called, OR-Tools executes a multi-stage pipeline internally. Here is exactly what happens:
+            </p>
+
+            <div class="pipeline">
+                <div class="pipeline-stage">
+                    <div class="pipeline-num">1</div>
+                    <div class="pipeline-content">
+                        <h4>Model Construction</h4>
+                        <p>OR-Tools builds an internal graph with <b>n nodes</b> and <b>n × n edges</b>. Each edge has a cost (distance). Decision variables (<code>NextVar</code>) are created for each node — one per node per vehicle.</p>
+                        <div class="pipeline-code"><code>RoutingIndexManager(n, K, 0)</code> — creates the node-to-index mapping</div>
+                    </div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage">
+                    <div class="pipeline-num">2</div>
+                    <div class="pipeline-content">
+                        <h4>Constraint Propagation</h4>
+                        <p>Before searching, OR-Tools performs <b>domain reduction</b> — it eliminates impossible assignments based on the constraints. For example, if a stop's demand exceeds bus capacity, that stop cannot be the only stop on any route (it must be dropped). This dramatically reduces the search space.</p>
+                    </div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage">
+                    <div class="pipeline-num">3</div>
+                    <div class="pipeline-content">
+                        <h4>Phase 1: Initial Solution — Path Cheapest Arc</h4>
+                        <p>A <b>constructive heuristic</b> builds the first feasible solution. Starting from the depot, it greedily extends the current route by always choosing the <b>nearest unvisited stop</b> that doesn't violate any constraint. When a bus is full or its distance budget is exhausted, a new bus starts.</p>
+                        <div class="pipeline-code"><code>params.first_solution_strategy = FirstSolutionStrategy.PATH_CHEAPEST_ARC</code></div>
+                        <div class="pipeline-note">⚡ This runs in <b>O(n²)</b> time — very fast, but produces a suboptimal "greedy" solution.</div>
+                    </div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage">
+                    <div class="pipeline-num">4</div>
+                    <div class="pipeline-content">
+                        <h4>Phase 2: Improvement — Guided Local Search (GLS)</h4>
+                        <p>Starting from the Phase 1 solution, OR-Tools applies <b>local search operators</b> — small modifications that try to improve the total distance:</p>
+                        <div class="gls-operators">
+                            <div class="gls-op">
+                                <span class="gls-op-name">2-opt</span>
+                                <span class="gls-op-desc">Reverses a segment within a single route to uncross paths</span>
+                            </div>
+                            <div class="gls-op">
+                                <span class="gls-op-name">Or-opt</span>
+                                <span class="gls-op-desc">Moves 1–3 consecutive stops from one position to another within the same route</span>
+                            </div>
+                            <div class="gls-op">
+                                <span class="gls-op-name">Relocate</span>
+                                <span class="gls-op-desc">Moves a stop from one bus's route to another bus's route</span>
+                            </div>
+                            <div class="gls-op">
+                                <span class="gls-op-name">Exchange</span>
+                                <span class="gls-op-desc">Swaps stops between two different bus routes</span>
+                            </div>
+                            <div class="gls-op">
+                                <span class="gls-op-name">Cross</span>
+                                <span class="gls-op-desc">Swaps tails of two routes — repartitions stops between buses</span>
+                            </div>
+                        </div>
+                        <p style="margin-top:14px;">
+                            <b>Guided Local Search (GLS)</b> adds <b>penalty terms</b> to frequently used edges. When the solver gets stuck in a local optimum (no single move improves the solution), GLS <em>penalises</em> the most-used edges, making the solver temporarily "forget" them and explore different route structures. This escapes local optima and finds better solutions.
+                        </p>
+                        <div class="pipeline-code"><code>params.local_search_metaheuristic = LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH</code></div>
+                    </div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage">
+                    <div class="pipeline-num">5</div>
+                    <div class="pipeline-content">
+                        <h4>Time Limit & Solution Extraction</h4>
+                        <p>Phase 2 runs iteratively until the <b>4-second time limit</b> expires. The best solution found is returned. Routes are extracted by following the <code>NextVar</code> chain for each vehicle from <code>routing.Start(vid)</code> to <code>routing.IsEnd(idx)</code>.</p>
+                        <div class="pipeline-code"><code>params.time_limit.FromSeconds(4)</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complete OR-Tools Data Flow -->
+        <div class="method-block">
+            <div class="method-step-badge">Part E</div>
+            <h3 class="method-title">Complete Data Flow — From Raw Data to Optimised Routes</h3>
+            <p class="method-desc">
+                This diagram shows the complete end-to-end flow of how data moves through the system, from the user interface through the OR-Tools solver and back to the map visualisation.
+            </p>
+            <div class="dataflow">
+                <div class="dataflow-row">
+                    <div class="dataflow-node input-node">
+                        <div class="dataflow-node-icon">📊</div>
+                        <div class="dataflow-node-label">Input Data</div>
+                        <div class="dataflow-node-detail">99 stops with coordinates + passenger demands per shift</div>
+                    </div>
+                    <div class="dataflow-arrow">→</div>
+                    <div class="dataflow-node process-node">
+                        <div class="dataflow-node-icon">🌐</div>
+                        <div class="dataflow-node-label">OSRM API</div>
+                        <div class="dataflow-node-detail">100×100 real road distance matrix (km)</div>
+                    </div>
+                    <div class="dataflow-arrow">→</div>
+                    <div class="dataflow-node process-node">
+                        <div class="dataflow-node-icon">🔍</div>
+                        <div class="dataflow-node-label">Pre-filtering</div>
+                        <div class="dataflow-node-detail">Drop stops beyond one-way distance limit</div>
+                    </div>
+                </div>
+                <div class="dataflow-connector-down">↓</div>
+                <div class="dataflow-row reverse">
+                    <div class="dataflow-node output-node">
+                        <div class="dataflow-node-icon">🗺️</div>
+                        <div class="dataflow-node-label">Map Rendering</div>
+                        <div class="dataflow-node-detail">DeckGL + OSRM route geometry tracing</div>
+                    </div>
+                    <div class="dataflow-arrow reverse-arrow">←</div>
+                    <div class="dataflow-node output-node">
+                        <div class="dataflow-node-icon">📋</div>
+                        <div class="dataflow-node-label">Solution Extraction</div>
+                        <div class="dataflow-node-detail">Follow NextVar chains → bus routes + KPIs</div>
+                    </div>
+                    <div class="dataflow-arrow reverse-arrow">←</div>
+                    <div class="dataflow-node solver-node">
+                        <div class="dataflow-node-icon">⚙️</div>
+                        <div class="dataflow-node-label">OR-Tools Solver</div>
+                        <div class="dataflow-node-detail">CVRP: Cheapest Arc → GLS (4s) → Best routes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why OR-Tools for CVRP -->
+        <div class="method-block">
+            <div class="method-step-badge">Part F</div>
+            <h3 class="method-title">Why Google OR-Tools? — Comparison with Alternatives</h3>
+            <p class="method-desc">Several tools exist for solving vehicle routing problems. Here's why Google OR-Tools was chosen for this project.</p>
+            <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th class="highlight-col">Google OR-Tools</th>
+                            <th>Gurobi / CPLEX</th>
+                            <th>Manual Heuristic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cost</td>
+                            <td class="highlight-col"><span class="tag-good">Free & Open Source</span></td>
+                            <td><span class="tag-bad">Commercial License</span></td>
+                            <td><span class="tag-good">Free</span></td>
+                        </tr>
+                        <tr>
+                            <td>CVRP Support</td>
+                            <td class="highlight-col"><span class="tag-good">Built-in Routing API</span></td>
+                            <td><span class="tag-neutral">Manual formulation</span></td>
+                            <td><span class="tag-bad">Must code from scratch</span></td>
+                        </tr>
+                        <tr>
+                            <td>Solution Quality</td>
+                            <td class="highlight-col"><span class="tag-good">Near-optimal (GLS)</span></td>
+                            <td><span class="tag-good">Optimal (exact)</span></td>
+                            <td><span class="tag-bad">Poor (greedy)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Speed (99 stops)</td>
+                            <td class="highlight-col"><span class="tag-good">~4 seconds</span></td>
+                            <td><span class="tag-neutral">Minutes to hours</span></td>
+                            <td><span class="tag-good">Milliseconds</span></td>
+                        </tr>
+                        <tr>
+                            <td>Python Integration</td>
+                            <td class="highlight-col"><span class="tag-good">Native <code>pip install</code></span></td>
+                            <td><span class="tag-neutral">Complex setup</span></td>
+                            <td><span class="tag-good">Native Python</span></td>
+                        </tr>
+                        <tr>
+                            <td>Scalability</td>
+                            <td class="highlight-col"><span class="tag-good">1000+ nodes</span></td>
+                            <td><span class="tag-neutral">Limited by license</span></td>
+                            <td><span class="tag-bad">Degrades fast</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="method-note">
+                ✅ <b>Conclusion:</b> Google OR-Tools provides the best balance of <b>solution quality</b>, <b>speed</b>, <b>ease of use</b>, and <b>zero licensing cost</b> — making it ideal for this real-world CVRP application in a factory transport context.
+            </div>
+        </div>
+
+        <!-- Summary of Key OR-Tools API Calls -->
+        <div class="method-block or-highlight">
+            <div class="method-step-badge">Summary</div>
+            <h3 class="method-title">Key OR-Tools API Calls Used in This Project</h3>
+            <p class="method-desc">
+                Below is a complete reference of every OR-Tools API call made in <code>optimizer.py</code> and what each one does mathematically.
+            </p>
+            <div class="api-reference">
+                <div class="api-row">
+                    <div class="api-call"><code>RoutingIndexManager(n, K, 0)</code></div>
+                    <div class="api-purpose">Create index manager mapping <b>n</b> nodes to <b>K</b> vehicles with depot at node 0</div>
+                </div>
+                <div class="api-row">
+                    <div class="api-call"><code>RoutingModel(manager)</code></div>
+                    <div class="api-purpose">Instantiate the CVRP model (creates all internal decision variables)</div>
+                </div>
+                <div class="api-row">
+                    <div class="api-call"><code>RegisterTransitCallback(fn)</code></div>
+                    <div class="api-purpose">Register a function that returns d<sub>ij</sub> (distance between two nodes)</div>
+                </div>
+                <div class="api-row accent-row">
+                    <div class="api-call"><code>SetArcCostEvaluatorOfAllVehicles(cb)</code></div>
+                    <div class="api-purpose"><b>Set the objective function</b> — minimise ∑ d<sub>ij</sub> · x<sub>ijk</sub> over all arcs and vehicles</div>
+                </div>
+                <div class="api-row">
+                    <div class="api-call"><code>RegisterUnaryTransitCallback(fn)</code></div>
+                    <div class="api-purpose">Register a function returning demand q<sub>i</sub> at each node (unary = depends only on "from" node)</div>
+                </div>
+                <div class="api-row accent-row">
+                    <div class="api-call"><code>AddDimensionWithVehicleCapacity(cb, 0, caps, True, name)</code></div>
+                    <div class="api-purpose"><b>Add capacity constraint</b> — cumulative demand per route ≤ vehicle capacity</div>
+                </div>
+                <div class="api-row accent-row">
+                    <div class="api-call"><code>AddDimension(cb, 0, max, True, name)</code></div>
+                    <div class="api-purpose"><b>Add distance constraint</b> — cumulative distance per route ≤ D<sub>max</sub></div>
+                </div>
+                <div class="api-row accent-row">
+                    <div class="api-call"><code>AddDisjunction([node], penalty)</code></div>
+                    <div class="api-purpose"><b>Make node optional</b> — solver can skip it by paying the penalty cost</div>
+                </div>
+                <div class="api-row">
+                    <div class="api-call"><code>SolveWithParameters(params)</code></div>
+                    <div class="api-purpose">Execute the solver pipeline (heuristic → metaheuristic → return best solution)</div>
+                </div>
+                <div class="api-row">
+                    <div class="api-call"><code>solution.Value(routing.NextVar(idx))</code></div>
+                    <div class="api-purpose">Read the solution: "which node does bus visit after node idx?"</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Section 4: Data Generation -->
     <section class="section">
         <h2 class="section-title">Synthetic Data Generation Pipeline</h2>
-        <p class="section-desc">Since real employee home-address data is confidential, this system generates a realistic synthetic dataset that mirrors actual factory transport patterns. The pipeline has four stages.</p>
+        <p class="section-desc">MAS Active Controline Pallekele employs approximately <b>2,500 workers</b> across two shifts (morning and afternoon). Since real employee home-address data is confidential, this system generates a realistic synthetic dataset scaled to match the actual factory headcount of ~2,500 workers. The pipeline has four stages.</p>
 
         <div class="method-block">
             <div class="method-step-badge">Stage 1</div>
@@ -384,9 +959,9 @@
 
         <div class="method-block">
             <div class="method-step-badge">Stage 3</div>
-            <h3 class="method-title">Demand Generation — Shift-Consistent Passenger Counts</h3>
+            <h3 class="method-title">Demand Generation — Scaled to ~2,500 Total Headcount</h3>
             <p class="method-desc">
-                For each stop, passenger demand is generated independently for two worker groups — morning shift and afternoon shift — using a <b>Discrete Uniform Distribution U[5, 25]</b>. The drop demands are then derived (not independently randomised) to enforce real-world logical consistency.
+                For each stop, raw passenger demand is generated independently for two worker groups — morning shift and afternoon shift — using a <b>Discrete Uniform Distribution U[5, 25]</b>. These raw values are then <b>proportionally scaled</b> so that each shift totals ~1,250 workers (morning + afternoon = ~2,500 total headcount, matching the real MAS Controline Pallekele factory workforce). The drop demands are derived (not independently randomised) to enforce real-world logical consistency.
             </p>
             <div class="constraints-grid">
                 <div class="constraint-card">
@@ -444,8 +1019,8 @@
 
     <!-- Section 5: Sample Dataset -->
     <section class="section">
-        <h2 class="section-title">Passenger Dataset</h2>
-        <p class="section-desc">All 99 destination stops within the selected radius with simulated daily passenger demand per shift.</p>
+        <h2 class="section-title">Passenger Dataset <span class="badge">~2,500 employees</span></h2>
+        <p class="section-desc">All 99 destination stops within the selected radius with simulated daily passenger demand per shift. Demands are scaled to match the real factory headcount of approximately <b>2,500 workers</b> across two shifts (~1,250 morning shift + ~1,250 afternoon shift).</p>
         <div id="loadingTable" class="loading-msg">Loading dataset...</div>
         <div class="table-wrapper" id="tableWrapper" style="display:none;">
             <table id="dataTable">
